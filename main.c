@@ -18,6 +18,9 @@ GLuint buffers[NumBuffers];
 
 const GLuint NumVertices = 6;
 
+GLfloat timeValue = 0.0;
+unsigned int shaderProgram;
+
 unsigned int load_shader(char* filepath, char* type){
     FILE* fp = fopen(filepath, "r");
     if(fp == NULL){
@@ -85,7 +88,7 @@ void init(){
     unsigned int vertexShader = load_shader("def.vert", "vertex");
     unsigned int fragmentShader = load_shader("def.frag", "fragment");
 
-    unsigned int shaderProgram = glCreateProgram();
+    shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
@@ -111,6 +114,8 @@ void init(){
     glVertexAttribPointer(vColor, 3, GL_FLOAT, GL_FALSE, 0, (void*)sizeof(positions));
     glEnableVertexAttribArray(vPosition);
     glEnableVertexAttribArray(vColor);
+
+    
 }
 
 void display(){
@@ -149,6 +154,9 @@ int main(int argc, char* argv[])
 
     while(!glfwWindowShouldClose(window))
     {
+        timeValue += 0.01;
+        GLint timeLoc = glGetUniformLocation(shaderProgram, "time");
+        glUniform1f(timeLoc, timeValue);
         display();
         glfwSwapBuffers(window);
         glfwPollEvents();    
