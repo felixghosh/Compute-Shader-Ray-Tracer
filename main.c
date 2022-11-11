@@ -6,12 +6,15 @@
 #include <unistd.h>
 #include <string.h>
 
-enum VAO_IDs {Triangles, NumVAOs};
-enum Buffer_IDs {ArrayBuffer, NumBuffers};
-enum Attrib_IDs { vPosition = 0};
+#define NumVAOs 1
+#define NumBuffers 1
+
+const int ArrayBuffer = 0;
+const int Triangles = 0;
+enum Attrib_IDs { vPosition = 0, vColor = 1};
 
 GLuint VAOs[NumVAOs];
-GLuint Buffers[NumBuffers];
+GLuint buffers[NumBuffers];
 
 const GLuint NumVertices = 6;
 
@@ -46,7 +49,7 @@ unsigned int load_shader(char* filepath, char* type){
 
     if(!success){
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        printf("Error! Shader compilation failed: %s\n", infoLog);
+        printf("Error! Compilation of %s shader failed: %s\n", type, infoLog);
     }
     free(shaderSource);
 
@@ -54,7 +57,7 @@ unsigned int load_shader(char* filepath, char* type){
 }
 
 void init(){
-    static const GLfloat vertices[6][3] = {
+    static const GLfloat positions[6][3] = {
         {-0.90, -0.90, 0.0},
         {0.85, -0.90, 0.0},
         {-0.90, 0.85, 0.0},
@@ -63,8 +66,21 @@ void init(){
         {-0.85, 0.90, 0.0}
     };
 
-    glCreateBuffers(NumBuffers, Buffers);
-    glNamedBufferStorage(Buffers[ArrayBuffer], sizeof(vertices), vertices, 0);
+    static const GLfloat colors[6][3] = {
+        {1.0, 0.0, 0.0},
+        {1.0, 1.0, 0.0},
+        {1.0, 1.0, 1.0},
+        {0.0, 1.0, 0.0},
+        {0.0, 0.0, 1.0},
+        {0.0, 1.0, 1.0},
+    };
+
+    size_t buffer_size = sizeof positions + sizeof colors;
+
+    glCreateBuffers(NumBuffers, buffers);
+    glNamedBufferStorage(buffers[ArrayBuffer], buffer_size, NULL, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferSubData(buffers[ArrayBuffer], 0, sizeof positions, positions);
+    glNamedBufferSubData(buffers[ArrayBuffer], sizeof positions, sizeof colors, colors);
 
     unsigned int vertexShader = load_shader("def.vert", "vertex");
     unsigned int fragmentShader = load_shader("def.frag", "fragment");
@@ -90,10 +106,11 @@ void init(){
 
     glGenVertexArrays(NumVAOs, VAOs);
     glBindVertexArray(VAOs[Triangles]);
-    glBindBuffer(GL_ARRAY_BUFFER, Buffers[ArrayBuffer]);
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[ArrayBuffer]);
     glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glVertexAttribPointer(vColor, 3, GL_FLOAT, GL_FALSE, 0, (void*)sizeof(positions));
     glEnableVertexAttribArray(vPosition);
-
+    glEnableVertexAttribArray(vColor);
 }
 
 void display(){
