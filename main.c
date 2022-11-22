@@ -21,6 +21,8 @@ const GLuint NumVertices = 6;
 GLfloat timeValue = 0.0;
 unsigned int shaderProgram;
 
+ const unsigned int TEXTURE_WIDTH = 512, TEXTURE_HEIGHT = 512;
+
 unsigned int load_shader(char* filepath, char* type){
     FILE* fp = fopen(filepath, "r");
     if(fp == NULL){
@@ -42,6 +44,8 @@ unsigned int load_shader(char* filepath, char* type){
         shader = glCreateShader(GL_VERTEX_SHADER);
     else if(strcmp(type, "fragment") == 0)
         shader = glCreateShader(GL_FRAGMENT_SHADER);
+    else if(strcmp(type, "compute") == 0)
+        shader = glCreateShader(GL_COMPUTE_SHADER);
 
     glShaderSource(shader, 1, (const char**)&shaderSource, NULL);
     glCompileShader(shader);
@@ -87,10 +91,12 @@ void init(){
 
     unsigned int vertexShader = load_shader("def.vert", "vertex");
     unsigned int fragmentShader = load_shader("def.frag", "fragment");
+    unsigned int computeShader = load_shader("def.comp", "compute");
 
     shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
+    //glAttachShader(shaderProgram, vertexShader);
+    //glAttachShader(shaderProgram, fragmentShader);
+    glAttachShader(shaderProgram, computeShader);
     glLinkProgram(shaderProgram);
 
     int success;
@@ -106,6 +112,7 @@ void init(){
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+    glDeleteShader(computeShader);
 
     glGenVertexArrays(NumVAOs, VAOs);
     glBindVertexArray(VAOs[Triangles]);
@@ -115,21 +122,55 @@ void init(){
     glEnableVertexAttribArray(vPosition);
     glEnableVertexAttribArray(vColor);
 
-    
+    //Compute shader stuff
+    GLuint tex_output;
+
+    glGenTextures(1, &tex_output);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex_output);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+
+    glBindImageTexture(0, tex_output, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+    int work_grp_cnt[3];
+
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
+
+    printf("max global (total) work group counts x:%i y:%i z:%i\n",
+    work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
+
+    int work_grp_size[3];
+
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
+
+    printf("max local (in one shader) work group sizes x:%i y:%i z:%i\n",
+    work_grp_size[0], work_grp_size[1], work_grp_size[2]);
+
+    int work_grp_inv;
+    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
+    printf("max local work group invocations %i\n", work_grp_inv);
 }
 
 void display(){
-    static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    /*static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glClearBufferfv(GL_COLOR, 0, black);
 
     glBindVertexArray(VAOs[Triangles]);
-    glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+    glDrawArrays(GL_TRIANGLES, 0, NumVertices);*/
 }
 
 int main(int argc, char* argv[])
 {
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -154,12 +195,13 @@ int main(int argc, char* argv[])
 
     while(!glfwWindowShouldClose(window))
     {
-        timeValue += 0.01;
-        GLint timeLoc = glGetUniformLocation(shaderProgram, "time");
-        glUniform1f(timeLoc, timeValue);
+        //timeValue += 0.01;
+        //GLint timeLoc = glGetUniformLocation(shaderProgram, "time");
+        //glUniform1f(timeLoc, timeValue);
         display();
         glfwSwapBuffers(window);
-        glfwPollEvents();    
+        glfwPollEvents();
+        
     }
 
     glfwDestroyWindow(window);
