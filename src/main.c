@@ -7,29 +7,15 @@
 #include "gl_utils.h"
 
 GLfloat timeValue = 0.0;
+
 unsigned int shaderProgram;
+const char* shaderSource = "shaders/def.comp";
 
 const unsigned int TEXTURE_WIDTH = 800, TEXTURE_HEIGHT = 800;
 
-// Compiles/Links compute shader and allocates texture buffer
+// Sets up shaders and textures buffer
 GLuint init() {
-    unsigned int computeShader  = load_shader("shaders/def.comp", COMP);
-
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, computeShader);
-    glLinkProgram(shaderProgram);
-
-    int success;
-    char infoLog[512];
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        printf("Error! Program linking failed: %s\n", infoLog);
-    }
-
-    glUseProgram(shaderProgram);
-    glDeleteShader(computeShader);
+    shaderProgram = compile_shader(shaderSource, COMP);
 
     // Compute shader stuff
     GLuint tex_output;
@@ -102,6 +88,10 @@ int main(int argc, char *argv[]) {
     glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                        GL_TEXTURE_2D, texture, 0);
 
+    // keyboard state detection
+    int prev_key_state = 0; 
+    int curr_key_state = 0;
+
     while (!glfwWindowShouldClose(window)) {
 
         // Shader computation
@@ -114,17 +104,23 @@ int main(int argc, char *argv[]) {
         glBlitFramebuffer(0, 0, TEXTURE_HEIGHT, TEXTURE_HEIGHT, 0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT,
                   GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-
         glfwPollEvents();
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
             glfwSetWindowShouldClose(window, 1);
         }
+
+        // Keyboard click edge detector
+        curr_key_state = glfwGetKey(window, GLFW_KEY_R);
+        if(prev_key_state == 0 && curr_key_state == 1) {
+            printf("Re-compiling shaders...\n");
+            shaderProgram = compile_shader(shaderSource, COMP);
+        }
+        prev_key_state = curr_key_state;
+    
         glfwSwapBuffers(window);
     }
 
     glfwDestroyWindow(window);
-    int* f;
-
     glfwTerminate();
     return 0;
 }

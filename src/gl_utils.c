@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-unsigned int load_shader(char *filepath, shader_type type) {
+unsigned int load_shader(const char *filepath, shader_type type) {
     FILE *fp = fopen(filepath, "r");
     if (fp == NULL) {
         printf("Error! Shader source file can't be opened!\n");
@@ -49,4 +49,25 @@ unsigned int load_shader(char *filepath, shader_type type) {
     free(shaderSource);
 
     return shader;
+}
+
+unsigned int compile_shader(const char *filepath, shader_type type)
+{
+    unsigned int shader = load_shader(filepath, type);
+    unsigned int program = glCreateProgram();
+    glAttachShader(program, shader);
+    glLinkProgram(program);
+
+    int success;
+    char infoLog[512];
+
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        printf("Error! Program linking failed: %s\n", infoLog);
+    }
+
+    glUseProgram(program);
+    glDeleteShader(shader);
+    return program;
 }
