@@ -1,3 +1,5 @@
+FILES = src/main.c src/gl_utils.c
+
 default:
-	gcc main.c -g -lGL -lGLEW -lglfw -lglut
+	gcc -g $(FILES) -lGL -lGLEW -lglfw -lglut
 	./a.out
