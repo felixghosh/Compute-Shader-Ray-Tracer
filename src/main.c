@@ -1,20 +1,22 @@
+#include "gl_utils.h"
+
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "gl_utils.h"
 
 GLfloat timeValue = 0.0;
 
 unsigned int shaderProgram;
-const char* shaderSource = "shaders/def.comp";
+const char  *shaderSource = "shaders/def.comp";
 
 const unsigned int TEXTURE_WIDTH = 800, TEXTURE_HEIGHT = 800;
 
 // Sets up shaders and textures buffer
-GLuint init() {
+GLuint init()
+{
     shaderProgram = compile_shader(shaderSource, COMP);
 
     // Compute shader stuff
@@ -57,13 +59,15 @@ GLuint init() {
     return tex_output;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(TEXTURE_WIDTH, TEXTURE_HEIGHT, "EDAN35 Project - Ray tracer", NULL, NULL);
+    GLFWwindow *window =
+        glfwCreateWindow(TEXTURE_WIDTH, TEXTURE_HEIGHT, "EDAN35 Project - Ray tracer", NULL, NULL);
     if (window == NULL) {
         printf("Failed to create GLFW window\n");
         glfwTerminate();
@@ -85,11 +89,10 @@ int main(int argc, char *argv[]) {
     GLuint fboId = 0;
     glGenFramebuffers(1, &fboId);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fboId);
-    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                       GL_TEXTURE_2D, texture, 0);
+    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
 
     // keyboard state detection
-    int prev_key_state = 0; 
+    int prev_key_state = 0;
     int curr_key_state = 0;
 
     while (!glfwWindowShouldClose(window)) {
@@ -102,7 +105,7 @@ int main(int argc, char *argv[]) {
 
         // Copy texture
         glBlitFramebuffer(0, 0, TEXTURE_HEIGHT, TEXTURE_HEIGHT, 0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT,
-                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
         glfwPollEvents();
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
@@ -111,12 +114,12 @@ int main(int argc, char *argv[]) {
 
         // Keyboard click edge detector
         curr_key_state = glfwGetKey(window, GLFW_KEY_R);
-        if(prev_key_state == 0 && curr_key_state == 1) {
+        if (prev_key_state == 0 && curr_key_state == 1) {
             printf("Re-compiling shaders...\n");
             shaderProgram = compile_shader(shaderSource, COMP);
         }
         prev_key_state = curr_key_state;
-    
+
         glfwSwapBuffers(window);
     }
 

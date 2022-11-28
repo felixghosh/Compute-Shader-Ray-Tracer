@@ -1,11 +1,12 @@
 #include "gl_utils.h"
+
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <stdio.h>
 #include <string.h>
 
-
-unsigned int load_shader(const char *filepath, shader_type type) {
+unsigned int load_shader(const char *filepath, shader_type type)
+{
     FILE *fp = fopen(filepath, "r");
     if (fp == NULL) {
         printf("Error! Shader source file can't be opened!\n");
@@ -22,8 +23,7 @@ unsigned int load_shader(const char *filepath, shader_type type) {
     fclose(fp);
 
     unsigned int shader;
-    switch (type)
-    {
+    switch (type) {
     case VERT:
         shader = glCreateShader(GL_VERTEX_SHADER);
         break;
@@ -38,7 +38,7 @@ unsigned int load_shader(const char *filepath, shader_type type) {
     glShaderSource(shader, 1, (const char **)&shaderSource, NULL);
     glCompileShader(shader);
 
-    int success;
+    int  success;
     char infoLog[512];
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
@@ -53,12 +53,12 @@ unsigned int load_shader(const char *filepath, shader_type type) {
 
 unsigned int compile_shader(const char *filepath, shader_type type)
 {
-    unsigned int shader = load_shader(filepath, type);
+    unsigned int shader  = load_shader(filepath, type);
     unsigned int program = glCreateProgram();
     glAttachShader(program, shader);
     glLinkProgram(program);
 
-    int success;
+    int  success;
     char infoLog[512];
 
     glGetProgramiv(program, GL_LINK_STATUS, &success);
