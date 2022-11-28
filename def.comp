@@ -8,7 +8,7 @@ void main() {
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 
     value.x = float(texelCoord.x)/(gl_NumWorkGroups.x);
-    value.y = float(texelCoord.y)/(gl_NumWorkGroups.y);
-
+    value.y = 0;
+    
     imageStore(imgOutput, texelCoord, value);
 }
