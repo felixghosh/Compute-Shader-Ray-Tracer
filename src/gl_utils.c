@@ -44,7 +44,7 @@ unsigned int load_shader(char *filepath, shader_type type) {
 
     if (!success) {
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        printf("Error! Compilation of %s shader failed: %s\n", type, infoLog);
+        printf("Error! Compilation of %d shader failed: %s\n", type, infoLog);
     }
     free(shaderSource);
 

@@ -9,7 +9,7 @@
 GLfloat timeValue = 0.0;
 unsigned int shaderProgram;
 
-const unsigned int TEXTURE_WIDTH = 800, TEXTURE_HEIGHT = 600;
+const unsigned int TEXTURE_WIDTH = 800, TEXTURE_HEIGHT = 800;
 
 // Compiles/Links compute shader and allocates texture buffer
 GLuint init() {
