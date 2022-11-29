@@ -97,7 +97,11 @@ int main(int argc, char *argv[])
 
     while (!glfwWindowShouldClose(window)) {
 
-        // Shader computation
+        // Passing uniforms
+        GLfloat light[] = {0.0, 1.0, 0.0};
+        glUniform3fv(glGetUniformLocation(shaderProgram, "light_position"), 1, &light);
+
+        // Shader computations
         glUseProgram(shaderProgram);
         glDispatchCompute((GLuint)TEXTURE_WIDTH, (GLuint)TEXTURE_HEIGHT, 1);
 
