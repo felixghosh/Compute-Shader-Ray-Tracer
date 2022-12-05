@@ -71,3 +71,14 @@ unsigned int compile_shader(const char *filepath, shader_type type)
     glDeleteShader(shader);
     return program;
 }
+
+GLuint create_ssbo(GLsizeiptr size, const void *data, GLenum usage, GLuint index)
+{
+    GLuint ssbo;
+    glGenBuffers(1, &ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usage);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    return ssbo;
+}

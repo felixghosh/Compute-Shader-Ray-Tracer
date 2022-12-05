@@ -1,8 +1,6 @@
 #include "gl_utils.h"
+#include "scene_buffer.h"
 
-#include <GL/glew.h>
-#include <GL/glut.h>
-#include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -95,11 +93,26 @@ int main(int argc, char *argv[])
     int prev_key_state = 0;
     int curr_key_state = 0;
 
+    // Building our scene gemometry
+    scene_buffer_t *scene_buff = new_buffer();
+    buffer_add(scene_buff, (vec4){-4, -5, -10.0, 3});
+    buffer_add(scene_buff, (vec4){3, 2, -10.0, 1});
+    buffer_add(scene_buff, (vec4){0, 0, -10.0, 7});
+
+    // Create scene ssbo
+    int    scene_size;
+    int    scene_n       = buffer_count_elements(scene_buff);
+    void  *scene_pointer = buffer_pointer(scene_buff, &scene_size);
+    GLuint scene_ssbo    = create_ssbo(scene_size, scene_pointer, GL_STATIC_DRAW, 2);
+
+    // Scene light
+    GLfloat light[] = {0.0, 1.0, 0.0};
+
     while (!glfwWindowShouldClose(window)) {
 
-        // Passing uniforms
-        GLfloat light[] = {0.0, 1.0, 0.0};
+        // Passing data/uniforms
         glUniform3fv(glGetUniformLocation(shaderProgram, "light_position"), 1, &light);
+        glUniform1i(glGetUniformLocation(shaderProgram, "n_spheres"), scene_n);
 
         // Shader computations
         glUseProgram(shaderProgram);
