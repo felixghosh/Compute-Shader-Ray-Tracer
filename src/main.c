@@ -1,9 +1,10 @@
-#include "gl_utils.h"
-#include "scene_buffer.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "gl_utils.h"
+#include "linalg.h"
+#include "scene_buffer.h"
 
 GLfloat timeValue = 0.0;
 
@@ -95,9 +96,9 @@ int main(int argc, char *argv[])
 
     // Building our scene gemometry
     scene_buffer_t *scene_buff = new_buffer();
-    buffer_add(scene_buff, (vec4){-4, -5, -10.0, 3});
-    buffer_add(scene_buff, (vec4){3, 2, -10.0, 1});
-    buffer_add(scene_buff, (vec4){0, 0, -10.0, 7});
+    buffer_add(scene_buff, create_sphere(3, create_vec3(-4, -5, -10.0), create_vec3(1, 0, 0)));
+    buffer_add(scene_buff, create_sphere(1, create_vec3(3, 2, -10.0), create_vec3(0, 1, 0)));
+    buffer_add(scene_buff, create_sphere(7, create_vec3(0, 0, -10.0), create_vec3(0, 0, 1)));
 
     // Create scene ssbo
     int    scene_size;
@@ -109,7 +110,6 @@ int main(int argc, char *argv[])
     GLfloat light[] = {0.0, 1.0, 0.0};
 
     while (!glfwWindowShouldClose(window)) {
-
         // Passing data/uniforms
         glUniform3fv(glGetUniformLocation(shaderProgram, "light_position"), 1, &light);
         glUniform1i(glGetUniformLocation(shaderProgram, "n_spheres"), scene_n);

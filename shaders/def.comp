@@ -3,10 +3,16 @@
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout (rgba32f, binding = 0) uniform image2D imgOutput;
 
+// Sphere object
+struct sphere_t {
+    vec4 pos;
+    vec4 color;
+};
+
 //Sphere buffer
 layout (std430, binding=2) buffer scene_data
 {
-    vec4 sphere[];
+    sphere_t spheres[];
 };
 
 uniform vec3 light_position;
@@ -61,8 +67,8 @@ void main() {
 
     // Interare over our scene, searching for our first hit
     for (int i = 0; i < n_spheres; i++) {
-        vec3 center = sphere[i].xyz;
-        float radius = sphere[i].w;
+        vec3 center = spheres[i].pos.xyz;
+        float radius = spheres[i].pos.w;
 
         // Colision testing
         float t = 0;
@@ -73,7 +79,7 @@ void main() {
              // Phong shading
             vec3 L = normalize(light_position - pos);
             vec3 N = normalize(p_colision - center);
-            vec3 diffuse = vec3(0.4, 0.4, 1.0) * max(0, dot(L, N));
+            vec3 diffuse = spheres[i].color.xyz * max(0, dot(L, N));
             color = diffuse;
         }
     }
