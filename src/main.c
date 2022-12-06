@@ -1,17 +1,27 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "gl_utils.h"
 #include "linalg.h"
 #include "scene_buffer.h"
 
 GLfloat timeValue = 0.0;
+float elapsed_time = 0.0;
+
+struct timespec t0, t1;
 
 unsigned int shaderProgram;
 const char  *shaderSource = "shaders/def.comp";
 
 const unsigned int TEXTURE_WIDTH = 800, TEXTURE_HEIGHT = 800;
+
+void update_time(){
+  clock_gettime(CLOCK_REALTIME, &t1);
+  elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec)/1000000000.0;
+  clock_gettime(CLOCK_REALTIME, &t0);
+}
 
 // Sets up shaders and textures buffer
 GLuint init()
@@ -94,6 +104,7 @@ int main(int argc, char *argv[])
     int prev_key_state = 0;
     int curr_key_state = 0;
 
+    
     // Building our scene gemometry
     scene_buffer_t *scene_buff = new_buffer();
     buffer_add(scene_buff, create_sphere(3, create_vec3(-4, -5, -10.0), create_vec3(1, 0, 0)));
@@ -109,10 +120,17 @@ int main(int argc, char *argv[])
     // Scene light
     GLfloat light[] = {0.0, 1.0, 0.0};
 
+    // Camera position
+    GLfloat camera_pos[] = {0.0, 0.0, 1.0};
+
     while (!glfwWindowShouldClose(window)) {
-        // Passing data/uniforms
+        update_time();
+        //printf("fps: %5u\n", (int)(1/elapsed_time));
+
+        // Passing uniforms
         glUniform3fv(glGetUniformLocation(shaderProgram, "light_position"), 1, &light);
         glUniform1i(glGetUniformLocation(shaderProgram, "n_spheres"), scene_n);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "camera_pos"), 1, &camera_pos);
 
         // Shader computations
         glUseProgram(shaderProgram);
@@ -136,6 +154,26 @@ int main(int argc, char *argv[])
             shaderProgram = compile_shader(shaderSource, COMP);
         }
         prev_key_state = curr_key_state;
+
+        if (glfwGetKey(window, GLFW_KEY_S) == 1) {
+           camera_pos[2] += 0.1; 
+        }
+        if (glfwGetKey(window, GLFW_KEY_W) == 1) {
+           camera_pos[2] -= 0.1; 
+        }
+        if (glfwGetKey(window, GLFW_KEY_D) == 1) {
+           camera_pos[0] += 0.1; 
+        }
+        if (glfwGetKey(window, GLFW_KEY_A) == 1) {
+           camera_pos[0] -= 0.1; 
+        }
+        if (glfwGetKey(window, GLFW_KEY_T) == 1) {
+           camera_pos[1] += 0.1; 
+        }
+        if (glfwGetKey(window, GLFW_KEY_G) == 1) {
+           camera_pos[1] -= 0.1; 
+        }
+        
 
         glfwSwapBuffers(window);
     }

@@ -17,6 +17,12 @@ layout (std430, binding=2) buffer scene_data
 
 uniform vec3 light_position;
 uniform int  n_spheres;
+uniform vec3 camera_pos;
+
+const float near_plane_z = -10.0;
+const float plane_width = 3.0;
+const float plane_height = 3.0;
+
 
 bool intersect(vec3 ray_d, vec3 ray_o, vec3 sphere_c, float sphere_r, inout float t) {
     vec3 orig2center = sphere_c - ray_o;
@@ -48,19 +54,36 @@ bool intersect(vec3 ray_d, vec3 ray_o, vec3 sphere_c, float sphere_r, inout floa
     return true;
 }
 
+mat4 rotationMatrix(vec3 axis, float angle)
+{
+    axis = normalize(axis);
+    float s = sin(angle);
+    float c = cos(angle);
+    float oc = 1.0 - c;
+    
+    return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
+                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
+                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
+                0.0,                                0.0,                                0.0,                                1.0);
+}
+
 void main() {
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 
     float max_x = 5.0;
     float max_y = 5.0;
     ivec2 dims = imageSize(imgOutput);
-    float x = float(texelCoord.x * 2 - dims.x) / dims.x;
-    float y = float(texelCoord.y * 2 - dims.y) / dims.y;
+    int x_clip = texelCoord.x * 2 - dims.x;
+    int y_clip = texelCoord.y * 2 - dims.y;
+    float x = float(x_clip) / dims.x;
+    float y = float(y_clip) / dims.y;
     vec3 pos = vec3(x, y, 0.0);
 
-    // Defining our ray
-    vec3 ray_o = vec3(x * max_x, y * max_y, 0.0);
-    vec3 ray_d = vec3(0.0, 0.0, -1.0); // ortho
+    // Our gemometry
+    vec3 ray_o = camera_pos;
+    vec3 plane_pos = vec3(camera_pos.x + x * plane_width, camera_pos.y + y * plane_height, camera_pos.z + near_plane_z);
+    vec3 ray_d = plane_pos - ray_o;
+    ray_d = normalize(ray_d);
 
     // Miss color
     vec3 color = vec3(0, 0,0);
@@ -77,7 +100,7 @@ void main() {
             vec3 p_colision = ray_o + t * ray_d;
 
              // Phong shading
-            vec3 L = normalize(light_position - pos);
+            vec3 L = normalize(light_position - p_colision);
             vec3 N = normalize(p_colision - center);
             vec3 diffuse = spheres[i].color.xyz * max(0, dot(L, N));
             color = diffuse;
