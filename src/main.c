@@ -1,15 +1,15 @@
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
-#include <math.h>
+#include <unistd.h>
 
 #include "gl_utils.h"
 #include "linalg.h"
 #include "scene_buffer.h"
 
-GLfloat timeValue = 0.0;
-float elapsed_time = 0.0;
+GLfloat timeValue    = 0.0;
+float   elapsed_time = 0.0;
 
 GLfloat camera_pos[] = {0.0, 0.0, 1.0};
 GLfloat camera_angle = 0.0;
@@ -21,16 +21,20 @@ const char  *shaderSource = "shaders/def.comp";
 
 const unsigned int TEXTURE_WIDTH = 800, TEXTURE_HEIGHT = 800;
 
-void update_time(){
-  clock_gettime(CLOCK_REALTIME, &t1);
-  elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec)/1000000000.0;
-  clock_gettime(CLOCK_REALTIME, &t0);
+void update_time()
+{
+    clock_gettime(CLOCK_REALTIME, &t1);
+    elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
+    clock_gettime(CLOCK_REALTIME, &t0);
 }
 
-void movCamera(float distX, float distY, float distZ){
-  camera_pos[0] += (float)sin(-camera_angle)*distZ + (float)sin(-camera_angle + M_PI/2)*distX;
-  camera_pos[1] += distY;
-  camera_pos[2] += (float)cos(-camera_angle)*distZ + (float)cos(-camera_angle + M_PI/2)*distX;
+void movCamera(float distX, float distY, float distZ)
+{
+    camera_pos[0] +=
+        (float)sin(-camera_angle) * distZ + (float)sin(-camera_angle + M_PI / 2) * distX;
+    camera_pos[1] += distY;
+    camera_pos[2] +=
+        (float)cos(-camera_angle) * distZ + (float)cos(-camera_angle + M_PI / 2) * distX;
 }
 
 // Sets up shaders and textures buffer
@@ -114,32 +118,46 @@ int main(int argc, char *argv[])
     int prev_key_state = 0;
     int curr_key_state = 0;
 
-    
     // Building our scene gemometry
-    scene_buffer_t *scene_buff = new_buffer();
-    buffer_add(scene_buff, create_sphere(3, create_vec3(-4, -5, -10.0), create_vec3(1, 0, 0)));
-    buffer_add(scene_buff, create_sphere(1, create_vec3(3, 2, -10.0), create_vec3(0, 1, 0)));
-    buffer_add(scene_buff, create_sphere(7, create_vec3(0, 0, -10.0), create_vec3(0, 0, 1)));
+    vec3 vertices[] = {
+        create_vec3(-20.0f, 0.0f, 50.0f),  create_vec3(20.0f, 0.0f, 50.0f),
+        create_vec3(20.0f, 0.0f, -50.0f),  // Floor 1
+        create_vec3(-20.0f, 0.0f, 50.0f),  create_vec3(20.0f, 0.0f, -50.0f),
+        create_vec3(-20.0f, 0.0f, -50.0f),  // Floor 2
+    };
 
-    // Create scene ssbo
-    int    scene_size;
-    int    scene_n       = buffer_count_elements(scene_buff);
-    void  *scene_pointer = buffer_pointer(scene_buff, &scene_size);
-    GLuint scene_ssbo    = create_ssbo(scene_size, scene_pointer, GL_STATIC_DRAW, 2);
+    scene_t *scene = new_scene();
+    scene_add_triangle(scene, create_triangle(&vertices[0], create_vec3(0.9f, 0.9f, 0.9f)));
+    scene_add_triangle(scene, create_triangle(&vertices[3], create_vec3(0.9f, 0.9f, 0.9f)));
+    scene_add_sphere(scene, create_sphere(3, create_vec3(-7, 3, -20.0), create_vec3(0, 1, 0)));
+    scene_add_sphere(scene, create_sphere(3, create_vec3(0, 3, -20.0), create_vec3(0, 0, 1)));
+    scene_add_sphere(scene, create_sphere(3, create_vec3(7, 3, -20.0), create_vec3(1, 0, 0)));
+
+    // Create sphere ssbo:s
+    int    sphere_size;
+    int    sphere_n    = scene_count_spheres(scene);
+    void  *sphere_ptr  = get_sphere_buffer(scene, &sphere_size);
+    GLuint sphere_ssbo = create_ssbo(sphere_size, sphere_ptr, GL_STATIC_DRAW, 2);
+
+    // Create triangle ssbo:s
+    int    triangle_size;
+    int    triangle_n    = scene_count_triangles(scene);
+    void  *triangle_ptr  = get_triangle_buffer(scene, &triangle_size);
+    GLuint triangle_ssbo = create_ssbo(triangle_size, triangle_ptr, GL_STATIC_DRAW, 3);
 
     // Scene light
-    GLfloat light[] = {0.0, 1.0, 0.0};
+    GLfloat light[] = {0.0, 30, -5};
 
     // Camera position
-    
 
     while (!glfwWindowShouldClose(window)) {
         update_time();
-        printf("fps: %5u\n", (int)(1/elapsed_time));
+        printf("fps: %5u\n", (int)(1 / elapsed_time));
 
         // Passing uniforms
         glUniform3fv(glGetUniformLocation(shaderProgram, "light_position"), 1, &light);
-        glUniform1i(glGetUniformLocation(shaderProgram, "n_spheres"), scene_n);
+        glUniform1i(glGetUniformLocation(shaderProgram, "n_spheres"), sphere_n);
+        glUniform1i(glGetUniformLocation(shaderProgram, "n_triangles"), triangle_n);
         glUniform3fv(glGetUniformLocation(shaderProgram, "camera_pos"), 1, &camera_pos);
         glUniform1f(glGetUniformLocation(shaderProgram, "camera_angle"), camera_angle);
 
@@ -167,32 +185,36 @@ int main(int argc, char *argv[])
         prev_key_state = curr_key_state;
 
         if (glfwGetKey(window, GLFW_KEY_S) == 1) {
-           //camera_pos[2] += 0.1; 
-           movCamera(0.0, 0.0, 0.1);
+            // camera_pos[2] += 0.1;
+            movCamera(0.0, 0.0, 0.1);
         }
         if (glfwGetKey(window, GLFW_KEY_W) == 1) {
-           //camera_pos[2] -= 0.1; 
-           movCamera(0.0, 0.0, -0.1);
+            // camera_pos[2] -= 0.1;
+            movCamera(0.0, 0.0, -0.1);
         }
         if (glfwGetKey(window, GLFW_KEY_D) == 1) {
-           //camera_pos[0] += 0.1; 
-           movCamera(0.1, 0.0, 0.0);
+            // camera_pos[0] += 0.1;
+            movCamera(0.1, 0.0, 0.0);
         }
         if (glfwGetKey(window, GLFW_KEY_A) == 1) {
-           //camera_pos[0] -= 0.1; 
-           movCamera(-0.1, 0.0, 0.0);
+            // camera_pos[0] -= 0.1;
+            movCamera(-0.1, 0.0, 0.0);
         }
         if (glfwGetKey(window, GLFW_KEY_T) == 1) {
-           camera_pos[1] += 0.1; 
+            camera_pos[1] += 0.1;
+            camera_pos[1] += 0.1;
+            camera_pos[1] += 0.1;
         }
         if (glfwGetKey(window, GLFW_KEY_G) == 1) {
-           camera_pos[1] -= 0.1; 
+            camera_pos[1] -= 0.1;
+            camera_pos[1] -= 0.1;
+            camera_pos[1] -= 0.1;
         }
         if (glfwGetKey(window, GLFW_KEY_Q) == 1) {
-           camera_angle -= 0.01; 
+            camera_angle -= 0.01;
         }
         if (glfwGetKey(window, GLFW_KEY_E) == 1) {
-           camera_angle += 0.01; 
+            camera_angle += 0.01;
         }
 
         glfwSwapBuffers(window);

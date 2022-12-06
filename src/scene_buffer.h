@@ -11,19 +11,34 @@
 typedef struct sphere_t {
     vec4 geometry; /*index (xyz) is its center, and index 3 is radius */
     vec4 color; /* only xyz will be used, is kept vec4 to make alignment easier when sending it to
-           the gpu*/
+                   the gpu*/
 } sphere_t;
 
+/* Object storing triangle properties */
+typedef struct triangle_t {
+    vec4 p0;
+    vec4 p1;
+    vec4 p2;
+    vec4 color; /* only xyz will be used, is kept vec4 to make alignment easier when sending it to
+                   the gpu*/
+} triangle_t;
+
 /* Struct containing the object making up the scene */
-typedef struct scene_buffer_t scene_buffer_t;
+typedef struct scene_t scene_t;
+
+/* Triangle functions */
+triangle_t create_triangle(vec3 points[3], vec3 color);
 
 /* Sphere functions */
 sphere_t create_sphere(float radius, vec3 center, vec3 color);
 
 /* Scene buffer functions */
-scene_buffer_t *new_buffer();
-void            buffer_add(scene_buffer_t *scene_buffer, sphere_t sphere);
-size_t          buffer_count_elements(scene_buffer_t *scene_buffer);
-void           *buffer_pointer(scene_buffer_t *scene_buffer, int *size);
+scene_t *new_scene();
+void     scene_add_sphere(scene_t *scene, sphere_t sphere);
+void     scene_add_triangle(scene_t *scene, triangle_t triangle);
+size_t   scene_count_spheres(scene_t *scene);
+size_t   scene_count_triangles(scene_t *scene);
+void    *get_sphere_buffer(scene_t *scene, int *size);
+void    *get_triangle_buffer(scene_t *scene, int *size);
 
 #endif /* SCENE_BUFFER_H */

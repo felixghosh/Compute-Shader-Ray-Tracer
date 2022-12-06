@@ -5,11 +5,17 @@
 
 #include "linalg.h"
 
-/* Struct containing the object making up the scene */
-struct scene_buffer_t {
-    int       capacity;
-    int       size;
-    sphere_t *buffer;
+/* Struct containing the objects making up the scene */
+struct scene_t {
+    /* Sphere buffer */
+    int       sphere_capacity;
+    int       sphere_size;
+    sphere_t *sphere_buffer;
+
+    /* Triangle buffer */
+    int         triangle_capacity;
+    int         triangle_size;
+    triangle_t *triangle_buffer;
 };
 
 sphere_t create_sphere(float radius, vec3 center, vec3 color)
@@ -20,41 +26,77 @@ sphere_t create_sphere(float radius, vec3 center, vec3 color)
     };
 }
 
-scene_buffer_t *new_buffer()
+triangle_t create_triangle(vec3 points[3], vec3 color)
 {
-    scene_buffer_t *sbo;
-    size_t          size = sizeof(scene_buffer_t);
+    return (triangle_t){
+        (vec4){points[0].x, points[0].y, points[0].z, 0},
+        (vec4){points[1].x, points[1].y, points[1].z, 0},
+        (vec4){points[2].x, points[2].y, points[2].z, 0},
+        (vec4){color.x,     color.y,     color.z,     0},
+    };
+}
+
+scene_t *new_scene()
+{
+    scene_t *sbo;
+    size_t   size = sizeof(scene_t);
 
     if ((sbo = calloc(1, size)) == NULL ||
-        (sbo->buffer = calloc(sizeof(sphere_t), INITAL_BUFFER_SIZE)) == NULL) {
+        (sbo->sphere_buffer = calloc(sizeof(sphere_t), INITAL_BUFFER_SIZE)) == NULL ||
+        (sbo->triangle_buffer = calloc(sizeof(triangle_t), INITAL_BUFFER_SIZE)) == NULL) {
         fprintf(stderr, "failed to allocate scene buffer\n");
         exit(EXIT_FAILURE);
     };
 
-    sbo->capacity = INITAL_BUFFER_SIZE;
+    sbo->sphere_capacity   = INITAL_BUFFER_SIZE;
+    sbo->triangle_capacity = INITAL_BUFFER_SIZE;
     return sbo;
 }
 
-void buffer_add(scene_buffer_t *scene_buffer, sphere_t sphere)
+void scene_add_sphere(scene_t *scene, sphere_t sphere)
 {
-    if (scene_buffer->size == scene_buffer->capacity) {
-        size_t new_size = (scene_buffer->capacity *= 2) * sizeof(sphere_t);
+    if (scene->sphere_size == scene->sphere_capacity) {
+        size_t new_size = (scene->sphere_capacity *= 2) * sizeof(sphere_t);
 
-        if ((scene_buffer->buffer = realloc(scene_buffer->buffer, new_size)) == NULL) {
-            fprintf(stderr, "failed to expand scene buffer\n");
+        if ((scene->sphere_buffer = realloc(scene->sphere_buffer, new_size)) == NULL) {
+            fprintf(stderr, "failed to expand sphere buffer\n");
             exit(EXIT_FAILURE);
         }
     }
-    scene_buffer->buffer[scene_buffer->size++] = sphere;
+    scene->sphere_buffer[scene->sphere_size++] = sphere;
 }
 
-size_t buffer_count_elements(scene_buffer_t *scene_buffer)
+void scene_add_triangle(scene_t *scene, triangle_t triangle)
 {
-    return scene_buffer->size;
+    if (scene->triangle_size == scene->triangle_capacity) {
+        size_t new_size = (scene->triangle_capacity *= 2) * sizeof(triangle_t);
+
+        if ((scene->triangle_buffer = realloc(scene->triangle_buffer, new_size)) == NULL) {
+            fprintf(stderr, "failed to expand triangle buffer\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+    scene->triangle_buffer[scene->triangle_size++] = triangle;
 }
 
-void *buffer_pointer(scene_buffer_t *scene_buffer, int *size)
+size_t scene_count_spheres(scene_t *scene)
 {
-    *size = sizeof(sphere_t) * scene_buffer->size;
-    return (void *)scene_buffer->buffer;
+    return scene->sphere_size;
+}
+
+size_t scene_count_triangles(scene_t *scene)
+{
+    return scene->triangle_size;
+}
+
+void *get_sphere_buffer(scene_t *scene, int *size)
+{
+    *size = sizeof(sphere_t) * scene->sphere_size;
+    return (void *)scene->sphere_buffer;
+}
+
+void *get_triangle_buffer(scene_t *scene, int *size)
+{
+    *size = sizeof(triangle_t) * scene->triangle_size;
+    return (void *)scene->triangle_buffer;
 }
