@@ -18,6 +18,7 @@ layout (std430, binding=2) buffer scene_data
 uniform vec3 light_position;
 uniform int  n_spheres;
 uniform vec3 camera_pos;
+uniform float camera_angle;
 
 const float near_plane_z = -10.0;
 const float plane_width = 3.0;
@@ -83,10 +84,13 @@ void main() {
     vec3 ray_o = camera_pos;
     vec3 plane_pos = vec3(camera_pos.x + x * plane_width, camera_pos.y + y * plane_height, camera_pos.z + near_plane_z);
     vec3 ray_d = plane_pos - ray_o;
+    mat4 rot = rotationMatrix(vec3(0.0, 1.0, 0.0), camera_angle);
+    ray_d = (rot * vec4(ray_d, 0.0)).xyz;
     ray_d = normalize(ray_d);
 
     // Miss color
     vec3 color = vec3(0, 0,0);
+    float t_old = 999999999.0;
 
     // Interare over our scene, searching for our first hit
     for (int i = 0; i < n_spheres; i++) {
@@ -96,7 +100,9 @@ void main() {
         // Colision testing
         float t = 0;
 
-        if (intersect(ray_d, ray_o, center, radius, t)) { 
+
+        if (intersect(ray_d, ray_o, center, radius, t) && t < t_old) {
+            t_old = t; 
             vec3 p_colision = ray_o + t * ray_d;
 
              // Phong shading

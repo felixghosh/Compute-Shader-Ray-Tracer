@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <math.h>
 
 #include "gl_utils.h"
 #include "linalg.h"
@@ -9,6 +10,9 @@
 
 GLfloat timeValue = 0.0;
 float elapsed_time = 0.0;
+
+GLfloat camera_pos[] = {0.0, 0.0, 1.0};
+GLfloat camera_angle = 0.0;
 
 struct timespec t0, t1;
 
@@ -21,6 +25,12 @@ void update_time(){
   clock_gettime(CLOCK_REALTIME, &t1);
   elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec)/1000000000.0;
   clock_gettime(CLOCK_REALTIME, &t0);
+}
+
+void movCamera(float distX, float distY, float distZ){
+  camera_pos[0] += (float)sin(-camera_angle)*distZ + (float)sin(-camera_angle + M_PI/2)*distX;
+  camera_pos[1] += distY;
+  camera_pos[2] += (float)cos(-camera_angle)*distZ + (float)cos(-camera_angle + M_PI/2)*distX;
 }
 
 // Sets up shaders and textures buffer
@@ -121,16 +131,17 @@ int main(int argc, char *argv[])
     GLfloat light[] = {0.0, 1.0, 0.0};
 
     // Camera position
-    GLfloat camera_pos[] = {0.0, 0.0, 1.0};
+    
 
     while (!glfwWindowShouldClose(window)) {
         update_time();
-        //printf("fps: %5u\n", (int)(1/elapsed_time));
+        printf("fps: %5u\n", (int)(1/elapsed_time));
 
         // Passing uniforms
         glUniform3fv(glGetUniformLocation(shaderProgram, "light_position"), 1, &light);
         glUniform1i(glGetUniformLocation(shaderProgram, "n_spheres"), scene_n);
         glUniform3fv(glGetUniformLocation(shaderProgram, "camera_pos"), 1, &camera_pos);
+        glUniform1f(glGetUniformLocation(shaderProgram, "camera_angle"), camera_angle);
 
         // Shader computations
         glUseProgram(shaderProgram);
@@ -156,16 +167,20 @@ int main(int argc, char *argv[])
         prev_key_state = curr_key_state;
 
         if (glfwGetKey(window, GLFW_KEY_S) == 1) {
-           camera_pos[2] += 0.1; 
+           //camera_pos[2] += 0.1; 
+           movCamera(0.0, 0.0, 0.1);
         }
         if (glfwGetKey(window, GLFW_KEY_W) == 1) {
-           camera_pos[2] -= 0.1; 
+           //camera_pos[2] -= 0.1; 
+           movCamera(0.0, 0.0, -0.1);
         }
         if (glfwGetKey(window, GLFW_KEY_D) == 1) {
-           camera_pos[0] += 0.1; 
+           //camera_pos[0] += 0.1; 
+           movCamera(0.1, 0.0, 0.0);
         }
         if (glfwGetKey(window, GLFW_KEY_A) == 1) {
-           camera_pos[0] -= 0.1; 
+           //camera_pos[0] -= 0.1; 
+           movCamera(-0.1, 0.0, 0.0);
         }
         if (glfwGetKey(window, GLFW_KEY_T) == 1) {
            camera_pos[1] += 0.1; 
@@ -173,7 +188,12 @@ int main(int argc, char *argv[])
         if (glfwGetKey(window, GLFW_KEY_G) == 1) {
            camera_pos[1] -= 0.1; 
         }
-        
+        if (glfwGetKey(window, GLFW_KEY_Q) == 1) {
+           camera_angle -= 0.01; 
+        }
+        if (glfwGetKey(window, GLFW_KEY_E) == 1) {
+           camera_angle += 0.01; 
+        }
 
         glfwSwapBuffers(window);
     }
