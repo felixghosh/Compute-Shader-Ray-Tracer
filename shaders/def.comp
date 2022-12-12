@@ -46,7 +46,7 @@ const float plane_height = 3.0;
 bool sphere_intersect(vec3 ray_d, vec3 ray_o, vec3 sphere_c, float sphere_r, inout float t) {
     vec3 orig2center = sphere_c - ray_o;
     float tca = dot(orig2center, ray_d); 
-    float d2 = dot(orig2center, orig2center) - tca * tca;
+    float d2 = length(orig2center - ray_d*tca);
 
     if(d2 > sphere_r) {
         return false;
