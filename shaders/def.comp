@@ -1,7 +1,7 @@
 #version 430 core
 
-#define EPISLON 0.000001
-#define INF     1.0 / 0.0;
+#define EPISLON (0.000001)
+#define INF     (1.0 / 0.0);
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout (rgba32f, binding = 0) uniform image2D imgOutput;
@@ -120,30 +120,12 @@ mat4 rotationMatrix(vec3 axis, float angle)
                 0.0,                                0.0,                                0.0,                                1.0);
 }
 
-void main() {
-    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
-
-    float max_x = 5.0;
-    float max_y = 5.0;
-    ivec2 dims = imageSize(imgOutput);
-    int x_clip = texelCoord.x * 2 - dims.x;
-    int y_clip = texelCoord.y * 2 - dims.y;
-    float x = float(x_clip) / dims.x;
-    float y = float(y_clip) / dims.y;
-    vec3 pos = vec3(x, y, 0.0);
-
-    // Our gemometry
-    vec3 ray_o = camera_pos;
-    vec3 plane_pos = vec3(camera_pos.x + x * plane_width, camera_pos.y + y * plane_height, camera_pos.z + near_plane_z);
-    vec3 ray_d = plane_pos - ray_o;
-    mat4 rot = rotationMatrix(vec3(0.0, 1.0, 0.0), camera_angle);
-    ray_d = (rot * vec4(ray_d, 0.0)).xyz;
-    ray_d = normalize(ray_d);
-
-    // Miss color
-    vec3 color = vec3(0, 0,0);
+bool trace_ray(vec3 ray_d, vec3 ray_o, bool any_hit, out vec3 color)
+{
     float nearest = INF;
     float t = 0;
+    color = vec3(0,0,0); // Shadow color
+    
 
     // Interare over our scene, searching for our first hit
     for (int i = 0; i < n_spheres; i++) {
@@ -160,6 +142,10 @@ void main() {
             vec3 diffuse = spheres[i].color.xyz * max(0, dot(L, N));
             color = diffuse;
             nearest = t;
+
+            if(any_hit) {
+                return true;
+            }
         }
     }
 
@@ -176,8 +162,39 @@ void main() {
             vec3 diffuse = triangle.color.xyz * max(0, dot(L, normal));
             color = diffuse;
             nearest = t;
+
+            if(any_hit) {
+                return true;
+            }
         }
     }
+
+    return nearest != INF;
+}
+
+void main() {
+    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    float max_x = 5.0;
+    float max_y = 5.0;
+    ivec2 dims = imageSize(imgOutput);
+    int x_clip = texelCoord.x * 2 - dims.x;
+    int y_clip = texelCoord.y * 2 - dims.y;
+    float x = float(x_clip) / dims.x;
+    float y = float(y_clip) / dims.y;
+    vec3 pos = vec3(x, y, 0.0);
+
+    // Compute ray
+    vec3 ray_o = camera_pos;
+    vec3 plane_pos = vec3(camera_pos.x + x * plane_width, camera_pos.y + y * plane_height, camera_pos.z + near_plane_z);
+    vec3 ray_d = plane_pos - ray_o;
+    mat4 rot = rotationMatrix(vec3(0.0, 1.0, 0.0), camera_angle);
+    ray_d = (rot * vec4(ray_d, 0.0)).xyz;
+    ray_d = normalize(ray_d);
+
+    // Ray-trace
+    vec3 color = vec3(0, 0, 0);
+    trace_ray(ray_d, ray_o, false, color);
 
     // Write result to texture
     vec4 pixel = vec4(color, 1.0);
