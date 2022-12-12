@@ -1,7 +1,7 @@
 #version 430 core
 
 #define EPISLON (0.000001)
-#define INF     (1.0 / 0.0);
+#define INF     (1.0 / 0.0)
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout (rgba32f, binding = 0) uniform image2D imgOutput;
@@ -48,7 +48,7 @@ struct hit_data {
     vec3 normal;
 };
 
-bool sphere_intersect(vec3 ray_d, vec3 ray_o, vec3 sphere_c, float sphere_r, inout float t) {
+bool sphere_intersect(vec3 ray_d, vec3 ray_o, vec3 sphere_c, float sphere_r, float tmin, float tmax, inout float t) {
     vec3 orig2center = sphere_c - ray_o;
     float tca = dot(orig2center, ray_d); 
     float d2 = length(orig2center - ray_d*tca);
@@ -75,40 +75,39 @@ bool sphere_intersect(vec3 ray_d, vec3 ray_o, vec3 sphere_c, float sphere_r, ino
     }
 
     t = t0;
-    return true;
+    return t > tmin && t < tmax;
 }
 
-/* Möller–Trumbore triangle intersection */
-bool triangle_intersect(vec3 ray_d, vec3 ray_o, triangle_t triangle, inout float t, inout vec3 normal) {
+bool triangle_intersect(vec3 ray_d, vec3 ray_o, triangle_t triangle, float tmin, float tmax, inout float t, inout vec3 normal) {
     vec3 p0 = triangle.p0.xyz;
     vec3 p1 = triangle.p1.xyz;
     vec3 p2 = triangle.p2.xyz;
 
     vec3 e1 = p1 - p0;
     vec3 e2 = p2 - p0;
-    vec3 pvec = cross(ray_d, e2);
-    float det = dot(e1, pvec);
-
-    /* non-culling version */
-    if(det > -EPISLON && det < EPISLON) 
-        return false;
-
-    float inv_det = 1 / det;
-    vec3 tvec = ray_o - p0;
-    float u = dot(tvec, pvec) * inv_det;
     
-    if(u < 0 || u > 1.0)
+    normal = cross(e1, e2);
+    float m = -dot(normal, p0);
+    
+    t = (dot(normal, ray_o) + m) / -dot(normal, ray_d);
+
+    // Check if  t within bounds
+    if (t < tmin || t > tmax) {
         return false;
+    }
 
-    vec3 qvec = cross(tvec, e1);
-    float v = dot(ray_d, qvec) * inv_det;
+    // Compute barycentrics
+    vec3 Q = ray_o + ray_d * t;
+    vec3 r = Q - p0;
+    float v = length(cross(e1, r)) / length(normal);
+    float w = length(cross(e2, r)) / length(normal); 
 
-    if (v < 0 || u + v > 1.0)
-        return false;    
-
-    t = dot(e2, qvec) * inv_det;
-    normal = normalize(cross(e1, e2));
-    return true;
+    // Check if within triangle
+    if (v < EPISLON || w < EPISLON || (v + w) > 1) {
+        return false;
+    }
+    
+    return true;    
 }
 
 
@@ -125,7 +124,7 @@ mat4 rotationMatrix(vec3 axis, float angle)
                 0.0,                                0.0,                                0.0,                                1.0);
 }
 
-bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, out hit_data hit)
+bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, float tmin, float tmax, out hit_data hit)
 {
     float nearest = INF;
     float t = 0;
@@ -136,7 +135,7 @@ bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, out hit_data hit)
         float radius = spheres[i].pos.w;
 
         // Colision testing
-        if (sphere_intersect(ray_d, ray_o, center, radius, t) && t < nearest) { 
+        if (sphere_intersect(ray_d, ray_o, center, radius, tmin, tmax, t) && t < nearest) { 
             hit.position = ray_o + t * ray_d;
             hit.normal = normalize(hit.position - center);
             hit.color = spheres[i].color.xyz;
@@ -153,9 +152,9 @@ bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, out hit_data hit)
         vec3 normal;
 
         // Colision testing
-        if(triangle_intersect(ray_d, ray_o, triangle, t, normal) && t < nearest) {
+        if(triangle_intersect(ray_d, ray_o, triangle, tmin, tmax, t, normal) && t < nearest) {
             hit.position = ray_o + t * ray_d;
-            hit.normal = normalize(light_position - hit.position);
+            hit.normal = normal;
             hit.color = triangle.color.xyz;
             nearest = t;
 
@@ -172,14 +171,23 @@ bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, out hit_data hit)
 vec3 trace_ray(vec3 ray_d, vec3 ray_o)
 {
     hit_data hit;
-    
-    if (!scene_intersection(ray_d, ray_o, false, hit)) {
-        return vec3(0,0,0); // Shadow color
+    hit_data shadow_hit;
+
+    if (!scene_intersection(ray_d, ray_o, false, EPISLON, INF, hit)) {
+        return vec3(0,0,0); // evironment base color
     };
 
-    // Phong shading
+    vec3 direct_color = hit.color;
     vec3 L = normalize(light_position - hit.position);
-    vec3 diffuse = hit.color * max(0, dot(L, hit.normal));
+    vec3 shadow_ray_d = L;
+    vec3 shadow_ray_o = hit.position;
+
+    if(scene_intersection(shadow_ray_d, shadow_ray_o, true, 0.01, sqrt(dot(L,L)), shadow_hit)) {
+        direct_color = vec3(0,0,0); 
+    } 
+
+    // Phong shading
+    vec3 diffuse = direct_color * max(0, dot(L, hit.normal));
 
     return diffuse;
 }
