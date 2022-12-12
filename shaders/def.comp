@@ -48,34 +48,35 @@ struct hit_data {
     vec3 normal;
 };
 
+bool solve_quadratic(float A, float B, float C, inout float t0, inout float t1) {
+    float d = B * B - 4.0f * A * C;
+    if (d < 0.0f) return false;
+    d = sqrt(d);
+    t0 = (-B - d) / (2.0f * A);
+    t1 = (-B + d) / (2.0f * A);
+    return true;
+}
+
 bool sphere_intersect(vec3 ray_d, vec3 ray_o, vec3 sphere_c, float sphere_r, float tmin, float tmax, inout float t) {
-    vec3 orig2center = sphere_c - ray_o;
-    float tca = dot(orig2center, ray_d); 
-    float d2 = length(orig2center - ray_d*tca);
+    vec3 o = ray_o - sphere_c;
+    vec3 d = ray_d;
 
-    if(d2 > sphere_r) {
-        return false;
+    // Compute polynom coefficients.
+    float A = dot(d, d);
+    float B = 2.0f * dot(d, o);
+    float C = dot(o, o) - sphere_r * sphere_r;
+
+    // Solve quadratic equation for ray enter/exit point t0, t1 respectively.
+    float t0, t1;
+    if (!solve_quadratic(A, B, C, t0, t1)) return false; // no real solutions -> ray missed
+
+    if (t0 > tmax || t1 < tmin) {
+        return false; // sphere before/after ray
     }
+    if (t0 < tmin && t1 > tmax) return false; // ray inside sphere
 
-    float thc = sqrt(sphere_r - d2);
-    float t0 = tca - thc;
-    float t1 = tca + thc;
-
-    if (t0 > t1) {
-        float tmp = t1;
-        t1 = t0;
-        t0 = tmp;
-    }
-
-    if (t0 < 0) {
-        t0 = t1;
-        if( t0 < 0) {
-            return false;
-        }
-    }
-
-    t = t0;
-    return t > tmin && t < tmax;
+    t = t0 < tmin ? t1 : t0;
+    return true;
 }
 
 bool triangle_intersect(vec3 ray_d, vec3 ray_o, triangle_t triangle, float tmin, float tmax, inout float t, inout vec3 normal) {
@@ -103,11 +104,10 @@ bool triangle_intersect(vec3 ray_d, vec3 ray_o, triangle_t triangle, float tmin,
     float w = length(cross(e2, r)) / length(normal); 
 
     // Check if within triangle
-    if (v < EPISLON || w < EPISLON || (v + w) > 1) {
-        return false;
+    if (v >= 0 && w >= 0 && v + w < 1) {
+        return true;
     }
-    
-    return true;    
+    return false;    
 }
 
 
