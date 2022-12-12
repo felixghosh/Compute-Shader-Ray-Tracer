@@ -42,6 +42,11 @@ const float near_plane_z = -10.0;
 const float plane_width = 3.0;
 const float plane_height = 3.0;
 
+struct hit_data {
+    vec3 color;
+    vec3 position;
+    vec3 normal;
+};
 
 bool sphere_intersect(vec3 ray_d, vec3 ray_o, vec3 sphere_c, float sphere_r, inout float t) {
     vec3 orig2center = sphere_c - ray_o;
@@ -120,12 +125,10 @@ mat4 rotationMatrix(vec3 axis, float angle)
                 0.0,                                0.0,                                0.0,                                1.0);
 }
 
-bool trace_ray(vec3 ray_d, vec3 ray_o, bool any_hit, out vec3 color)
+bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, out hit_data hit)
 {
     float nearest = INF;
     float t = 0;
-    color = vec3(0,0,0); // Shadow color
-    
 
     // Interare over our scene, searching for our first hit
     for (int i = 0; i < n_spheres; i++) {
@@ -134,13 +137,9 @@ bool trace_ray(vec3 ray_d, vec3 ray_o, bool any_hit, out vec3 color)
 
         // Colision testing
         if (sphere_intersect(ray_d, ray_o, center, radius, t) && t < nearest) { 
-            vec3 p_colision = ray_o + t * ray_d;
-
-             // Phong shading
-            vec3 L = normalize(light_position - p_colision);
-            vec3 N = normalize(p_colision - center);
-            vec3 diffuse = spheres[i].color.xyz * max(0, dot(L, N));
-            color = diffuse;
+            hit.position = ray_o + t * ray_d;
+            hit.normal = normalize(hit.position - center);
+            hit.color = spheres[i].color.xyz;
             nearest = t;
 
             if(any_hit) {
@@ -155,12 +154,9 @@ bool trace_ray(vec3 ray_d, vec3 ray_o, bool any_hit, out vec3 color)
 
         // Colision testing
         if(triangle_intersect(ray_d, ray_o, triangle, t, normal) && t < nearest) {
-            vec3 p_colision = ray_o + t * ray_d;
-
-             // Phong shading
-            vec3 L = normalize(light_position - p_colision);
-            vec3 diffuse = triangle.color.xyz * max(0, dot(L, normal));
-            color = diffuse;
+            hit.position = ray_o + t * ray_d;
+            hit.normal = normalize(light_position - hit.position);
+            hit.color = triangle.color.xyz;
             nearest = t;
 
             if(any_hit) {
@@ -170,6 +166,22 @@ bool trace_ray(vec3 ray_d, vec3 ray_o, bool any_hit, out vec3 color)
     }
 
     return nearest != INF;
+}
+
+
+vec3 trace_ray(vec3 ray_d, vec3 ray_o)
+{
+    hit_data hit;
+    
+    if (!scene_intersection(ray_d, ray_o, false, hit)) {
+        return vec3(0,0,0); // Shadow color
+    };
+
+    // Phong shading
+    vec3 L = normalize(light_position - hit.position);
+    vec3 diffuse = hit.color * max(0, dot(L, hit.normal));
+
+    return diffuse;
 }
 
 void main() {
@@ -193,8 +205,7 @@ void main() {
     ray_d = normalize(ray_d);
 
     // Ray-trace
-    vec3 color = vec3(0, 0, 0);
-    trace_ray(ray_d, ray_o, false, color);
+    vec3 color = trace_ray(ray_d, ray_o);
 
     // Write result to texture
     vec4 pixel = vec4(color, 1.0);
