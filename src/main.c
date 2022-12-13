@@ -258,10 +258,10 @@ int main(int argc, char *argv[])
             camera_angle += 0.01*elapsed_time*TIME_CONST;
         }
         if (glfwGetKey(window, GLFW_KEY_Y) == 1) {
-            light[2] -= 0.1;
+            light[2] -= 0.1*elapsed_time*TIME_CONST;
         }
         if (glfwGetKey(window, GLFW_KEY_H) == 1) {
-            light[2] += 0.1;
+            light[2] += 0.1*elapsed_time*TIME_CONST;
         }
 
         glfwSwapBuffers(window);
