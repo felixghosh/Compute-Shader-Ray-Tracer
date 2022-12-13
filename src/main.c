@@ -172,6 +172,11 @@ int main(int argc, char *argv[])
     scene_add_sphere(scene, create_sphere(3, create_vec3(0, 3, -20.0), create_vec3(0, 0, 1)));
     scene_add_sphere(scene, create_sphere(3, create_vec3(7, 3, -20.0), create_vec3(1, 0, 0)));
 
+    scene_add_sphere(
+        scene, create_sphere(3, create_vec3(9.0f, 10.0f, 0.0f), create_vec3(1.0f, 0.6f, 0.1f)));
+    scene_add_sphere(
+        scene, create_sphere(3, create_vec3(0.0f, 13.0f, 0.0f), create_vec3(0.1f, 0.1f, 1.0f)));
+
     // Create sphere ssbo:s
     int    sphere_size;
     int    sphere_n    = scene_count_spheres(scene);

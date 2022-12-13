@@ -1,5 +1,6 @@
 #version 430 core
 
+#define DEPTH   (3)
 #define EPISLON (0.000001)
 #define INF     (1.0 / 0.0)
 #define FLT_MAX (3.402823466e+38)
@@ -49,7 +50,15 @@ struct hit_data {
     vec3 normal;
 };
 
-bool solve_quadratic(float A, float B, float C, inout float t0, inout float t1) {
+struct ray_node {
+    vec3 ray_o;
+    vec3 ray_d;
+    vec3 color;
+    float weight;
+    int child_index;
+};
+
+bool solve_quadratic(float A, float B, float C, out float t0, out float t1) {
     float d = B * B - 4.0f * A * C;
     if (d < 0.0f) return false;
     d = sqrt(d);
@@ -80,7 +89,7 @@ bool sphere_intersect(vec3 ray_d, vec3 ray_o, vec3 sphere_c, float sphere_r, flo
     return true;
 }
 
-bool triangle_intersect(vec3 ray_d, vec3 ray_o, triangle_t triangle, float tmin, float tmax, inout float t, inout vec3 normal) {
+bool triangle_intersect(vec3 ray_d, vec3 ray_o, triangle_t triangle, float tmin, float tmax, inout float t, out vec3 normal) {
     vec3 p0 = triangle.p0.xyz;
     vec3 p1 = triangle.p1.xyz;
     vec3 p2 = triangle.p2.xyz;
@@ -172,7 +181,7 @@ bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, float tmin, float 
         if(triangle_intersect(ray_d, ray_o, triangle, tmin, tmax, t, normal) && t < nearest) {
             hit.position = ray_o + t * ray_d;
             hit.normal = normal;
-            hit.color = triangle.color.xyz;
+            hit.color = vec3(0.9, 0, 0);//triangle.color.xyz;
             nearest = t;
 
             if(any_hit) {
@@ -185,7 +194,7 @@ bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, float tmin, float 
 }
 
 
-vec3 trace_ray(vec3 ray_d, vec3 ray_o)
+vec3 trace_ray(vec3 ray_d, vec3 ray_o, int n)
 {
     hit_data hit;
     hit_data shadow_hit;
@@ -201,12 +210,82 @@ vec3 trace_ray(vec3 ray_d, vec3 ray_o)
 
     if(scene_intersection(shadow_ray_d, shadow_ray_o, true, 0.01, sqrt(dot(L,L)), shadow_hit)) {
         direct_color = vec3(0,0,0); 
-    } 
+    }
 
-    // Phong shading
+    // Phong diffuse
     vec3 diffuse = direct_color * max(0, dot(L, hit.normal));
 
     return diffuse;
+}
+
+vec3 trace_ray_iter(vec3 ray_d, vec3 ray_o, out vec3 ray_d_next, out vec3 ray_o_next, out bool has_refract, inout float weight)
+{
+    hit_data hit;
+    hit_data shadow_hit;
+    has_refract = false;
+
+    if (!scene_intersection(ray_d, ray_o, false, EPISLON, INF, hit)) {
+        return vec3(0,0,0); // evironment base color
+    };
+
+    vec3 direct_color = hit.color;
+    vec3 L = normalize(light_position - hit.position);
+    vec3 shadow_ray_d = L;
+    vec3 shadow_ray_o = hit.position;
+
+    if(scene_intersection(shadow_ray_d, shadow_ray_o, true, 0.01, sqrt(dot(L,L)), shadow_hit)) {
+        direct_color = vec3(0,0,0); 
+    }
+
+    // Phong diffuse
+    vec3 diffuse = direct_color * max(0, dot(L, hit.normal));
+    vec3 reflect_color = vec3(0, 0, 0);
+
+    // Refraction
+    float refectivity = 0; // TODO: Don't hardcode
+
+    if (direct_color == vec3(0.1, 0.1, 1.0)) {
+        refectivity = 0.9;
+    }  
+
+    if (direct_color == vec3(1.0, 0.6, 0.1)) {
+        refectivity = 0.2;
+    }  
+
+    float diffuse_wight = weight * (1 - refectivity);
+    if (refectivity > 0) {
+        has_refract = true;
+        weight *= refectivity;
+        ray_d_next = reflect(ray_d, hit.normal);
+        ray_o_next = hit.position;
+    }
+
+    return diffuse * diffuse_wight;
+}
+
+
+vec3 trace_ray_recur(vec3 ray_d, vec3 ray_o) 
+{
+    int size = 0;
+    vec3 color = vec3(0, 0, 0);
+    float weight = 1;
+    bool has_refract = false;
+
+    vec3 ray_iter_d = ray_d;
+    vec3 ray_iter_o = ray_o;
+    vec3 ray_d_next, ray_o_next;
+
+    for (int i = 0; i < DEPTH; i++) {
+        color += trace_ray_iter(ray_iter_d, ray_iter_o, ray_d_next, ray_iter_o, has_refract, weight);
+
+        if(!has_refract) {
+            break;
+        }
+
+        ray_iter_d = ray_d_next;
+        ray_iter_o = ray_o_next;        
+    }
+    return color;
 }
 
 void main() {
@@ -230,7 +309,7 @@ void main() {
     ray_d = normalize(ray_d);
 
     // Ray-trace
-    vec3 color = trace_ray(ray_d, ray_o);
+    vec3 color = trace_ray_recur(ray_d, ray_o);
 
     // Write result to texture
     vec4 pixel = vec4(color, 1.0);
