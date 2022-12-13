@@ -148,11 +148,11 @@ int main(int argc, char *argv[])
      scene_add_triangle(scene,
                         create_triangle(&vertices[0], create_vec3(1.0f, 0.1f, 0.1f)));  // Floor 1
     scene_add_triangle(scene,
-                       create_triangle(&vertices[3], create_vec3(1.0f, 0.0f, 0.1f)));  // Floor 2
-    //  scene_add_triangle(
-    //       scene, create_triangle(&vertices[6], create_vec3(0.9f, 0.9f, 0.9f)));  // Back wall 1
-    //   scene_add_triangle(
-    //       scene, create_triangle(&vertices[9], create_vec3(0.9f, 0.9f, 0.9f)));  // Back wall 2
+                       create_triangle(&vertices[3], create_vec3(1.0f, 1.0f, 0.1f)));  // Floor 2
+      scene_add_triangle(
+           scene, create_triangle(&vertices[6], create_vec3(0.9f, 0.9f, 0.9f)));  // Back wall 1
+       scene_add_triangle(
+           scene, create_triangle(&vertices[9], create_vec3(0.9f, 0.9f, 0.9f)));  // Back wall 2
     //   scene_add_triangle(scene,
     //                      create_triangle(&vertices[12], create_vec3(0.9f, 0.9f, 0.9f)));  //
     //                      Ceiling 1

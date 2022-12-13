@@ -181,7 +181,7 @@ bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, float tmin, float 
         if(triangle_intersect(ray_d, ray_o, triangle, tmin, tmax, t, normal) && t < nearest) {
             hit.position = ray_o + t * ray_d;
             hit.normal = normal;
-            hit.color = vec3(0.9, 0, 0);//triangle.color.xyz;
+            hit.color = triangle.color.xyz;
             nearest = t;
 
             if(any_hit) {
