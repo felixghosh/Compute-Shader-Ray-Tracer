@@ -11,10 +11,12 @@
 GLfloat timeValue    = 0.0;
 float   elapsed_time = 0.0;
 
-GLfloat camera_pos[] = {0.0, 0.0, 1.0};
+GLfloat camera_pos[] = {0.0, 2.0, 1.0};
 GLfloat camera_angle = 0.0;
 
 struct timespec t0, t1;
+
+float speed = 0.3;
 
 unsigned int shaderProgram;
 const char  *shaderSource = "shaders/def.comp";
@@ -143,8 +145,8 @@ int main(int argc, char *argv[])
     };
 
     scene_t *scene = new_scene();
-    // scene_add_triangle(scene,
-    //                    create_triangle(&vertices[0], create_vec3(1.0f, 0.1f, 0.1f)));  // Floor 1
+     scene_add_triangle(scene,
+                        create_triangle(&vertices[0], create_vec3(1.0f, 0.1f, 0.1f)));  // Floor 1
     scene_add_triangle(scene,
                        create_triangle(&vertices[3], create_vec3(1.0f, 0.1f, 0.1f)));  // Floor 2
     //  scene_add_triangle(
@@ -187,7 +189,6 @@ int main(int argc, char *argv[])
     // Scene light
     GLfloat light[] = {0.0, 30, -5};
 
-    // Camera position
 
     while (!glfwWindowShouldClose(window)) {
         update_time();
@@ -225,29 +226,25 @@ int main(int argc, char *argv[])
 
         if (glfwGetKey(window, GLFW_KEY_S) == 1) {
             // camera_pos[2] += 0.1;
-            movCamera(0.0, 0.0, 0.1);
+            movCamera(0.0, 0.0, speed);
         }
         if (glfwGetKey(window, GLFW_KEY_W) == 1) {
             // camera_pos[2] -= 0.1;
-            movCamera(0.0, 0.0, -0.1);
+            movCamera(0.0, 0.0, -speed);
         }
         if (glfwGetKey(window, GLFW_KEY_D) == 1) {
             // camera_pos[0] += 0.1;
-            movCamera(0.1, 0.0, 0.0);
+            movCamera(speed, 0.0, 0.0);
         }
         if (glfwGetKey(window, GLFW_KEY_A) == 1) {
             // camera_pos[0] -= 0.1;
-            movCamera(-0.1, 0.0, 0.0);
+            movCamera(-speed, 0.0, 0.0);
         }
         if (glfwGetKey(window, GLFW_KEY_T) == 1) {
-            camera_pos[1] += 0.1;
-            camera_pos[1] += 0.1;
-            camera_pos[1] += 0.1;
+            camera_pos[1] += speed;
         }
         if (glfwGetKey(window, GLFW_KEY_G) == 1) {
-            camera_pos[1] -= 0.1;
-            camera_pos[1] -= 0.1;
-            camera_pos[1] -= 0.1;
+            camera_pos[1] -= speed;
         }
         if (glfwGetKey(window, GLFW_KEY_Q) == 1) {
             camera_angle -= 0.01;
