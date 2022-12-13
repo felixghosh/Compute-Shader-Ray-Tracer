@@ -145,28 +145,26 @@ int main(int argc, char *argv[])
     };
 
     scene_t *scene = new_scene();
-     scene_add_triangle(scene,
-                        create_triangle(&vertices[0], create_vec3(1.0f, 0.1f, 0.1f)));  // Floor 1
     scene_add_triangle(scene,
-                       create_triangle(&vertices[3], create_vec3(1.0f, 1.0f, 0.1f)));  // Floor 2
-      scene_add_triangle(
-           scene, create_triangle(&vertices[6], create_vec3(0.9f, 0.9f, 0.9f)));  // Back wall 1
-       scene_add_triangle(
-           scene, create_triangle(&vertices[9], create_vec3(0.9f, 0.9f, 0.9f)));  // Back wall 2
-    //   scene_add_triangle(scene,
-    //                      create_triangle(&vertices[12], create_vec3(0.9f, 0.9f, 0.9f)));  //
-    //                      Ceiling 1
-    //   scene_add_triangle(scene,
-    //                      create_triangle(&vertices[15], create_vec3(0.9f, 0.9f, 0.9f)));  //
-    //                      Ceiling 2
-    //   scene_add_triangle(
-    //       scene, create_triangle(&vertices[18], create_vec3(1.0f, 0.1f, 0.1f)));  // Red wall 1
-    //   scene_add_triangle(
-    //       scene, create_triangle(&vertices[21], create_vec3(1.0f, 0.1f, 0.1f)));  // Red wall 2
-    //   scene_add_triangle(
-    //       scene, create_triangle(&vertices[24], create_vec3(0.1f, 0.6f, 0.1f)));  // Green wall 1
-    //   scene_add_triangle(
-    //       scene, create_triangle(&vertices[27], create_vec3(0.1f, 0.6f, 0.1f)));  // Green wall 2
+                       create_triangle(&vertices[0], create_vec3(0.9f, 0.9f, 0.9f)));  // Floor 1
+    scene_add_triangle(scene,
+                       create_triangle(&vertices[3], create_vec3(0.9f, 0.9f, 0.9f)));  // Floor 2
+    scene_add_triangle(
+        scene, create_triangle(&vertices[6], create_vec3(0.9f, 0.9f, 0.9f)));  // Back wall 1
+    scene_add_triangle(
+        scene, create_triangle(&vertices[9], create_vec3(0.9f, 0.9f, 0.9f)));  // Back wall 2
+    scene_add_triangle(scene,
+                       create_triangle(&vertices[12], create_vec3(0.9f, 0.9f, 0.9f)));  // Ceiling 1
+    scene_add_triangle(scene,
+                       create_triangle(&vertices[15], create_vec3(0.9f, 0.9f, 0.9f)));  // Ceiling 2
+    scene_add_triangle(
+        scene, create_triangle(&vertices[18], create_vec3(1.0f, 0.1f, 0.1f)));  // Red wall 1
+    scene_add_triangle(
+        scene, create_triangle(&vertices[21], create_vec3(1.0f, 0.1f, 0.1f)));  // Red wall 2
+    scene_add_triangle(
+        scene, create_triangle(&vertices[24], create_vec3(0.1f, 0.6f, 0.1f)));  // Green wall 1
+    scene_add_triangle(
+        scene, create_triangle(&vertices[27], create_vec3(0.1f, 0.6f, 0.1f)));  // Green wall 2
 
     scene_add_sphere(scene, create_sphere(3, create_vec3(-7, 3, -20.0), create_vec3(0, 1, 0)));
     scene_add_sphere(scene, create_sphere(3, create_vec3(0, 3, -20.0), create_vec3(0, 0, 1)));
@@ -192,8 +190,7 @@ int main(int argc, char *argv[])
     printf("N triangles: %d\n", triangle_n);
 
     // Scene light
-    GLfloat light[] = {0.0, 10, -5};
-
+    GLfloat light[] = {0.0, 30, -5};
 
     while (!glfwWindowShouldClose(window)) {
         update_time();

@@ -204,11 +204,12 @@ vec3 trace_ray(vec3 ray_d, vec3 ray_o, int n)
     };
 
     vec3 direct_color = hit.color;
-    vec3 L = normalize(light_position - hit.position);
+    vec3 light_dir = light_position - hit.position;
+    vec3 L = normalize(light_dir);
     vec3 shadow_ray_d = L;
     vec3 shadow_ray_o = hit.position;
 
-    if(scene_intersection(shadow_ray_d, shadow_ray_o, true, 0.01, sqrt(dot(L,L)), shadow_hit)) {
+    if(scene_intersection(shadow_ray_d, shadow_ray_o, true, 0.01, length(light_dir), shadow_hit)) {
         direct_color = vec3(0,0,0); 
     }
 
@@ -229,11 +230,12 @@ vec3 trace_ray_iter(vec3 ray_d, vec3 ray_o, out vec3 ray_d_next, out vec3 ray_o_
     };
 
     vec3 direct_color = hit.color;
-    vec3 L = normalize(light_position - hit.position);
+    vec3 light_dir = light_position - hit.position;
+    vec3 L = normalize(light_dir);
     vec3 shadow_ray_d = L;
     vec3 shadow_ray_o = hit.position;
 
-    if(scene_intersection(shadow_ray_d, shadow_ray_o, true, 0.01, sqrt(dot(L,L)), shadow_hit)) {
+    if(scene_intersection(shadow_ray_d, shadow_ray_o, true, 0.01, length(light_dir), shadow_hit)) {
         direct_color = vec3(0,0,0); 
     }
 
