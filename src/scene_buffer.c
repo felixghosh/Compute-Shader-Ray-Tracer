@@ -42,14 +42,14 @@ scene_t *new_scene()
     size_t   size = sizeof(scene_t);
 
     if ((sbo = calloc(1, size)) == NULL ||
-        (sbo->sphere_buffer = calloc(sizeof(sphere_t), INITAL_BUFFER_SIZE)) == NULL ||
-        (sbo->triangle_buffer = calloc(sizeof(triangle_t), INITAL_BUFFER_SIZE)) == NULL) {
+        (sbo->sphere_buffer = calloc(sizeof(sphere_t), INITIAL_BUFFER_SIZE)) == NULL ||
+        (sbo->triangle_buffer = calloc(sizeof(triangle_t), INITIAL_BUFFER_SIZE)) == NULL) {
         fprintf(stderr, "failed to allocate scene buffer\n");
         exit(EXIT_FAILURE);
     };
 
-    sbo->sphere_capacity   = INITAL_BUFFER_SIZE;
-    sbo->triangle_capacity = INITAL_BUFFER_SIZE;
+    sbo->sphere_capacity   = INITIAL_BUFFER_SIZE;
+    sbo->triangle_capacity = INITIAL_BUFFER_SIZE;
     return sbo;
 }
 

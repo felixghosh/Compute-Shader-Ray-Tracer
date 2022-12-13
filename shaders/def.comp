@@ -40,7 +40,7 @@ uniform int  n_triangles;
 uniform vec3 camera_pos;
 uniform float camera_angle;
 
-const float near_plane_z = -10.0;
+const float near_plane_z = -5.0;
 const float plane_width = 3.0;
 const float plane_height = 3.0;
 
@@ -254,6 +254,8 @@ vec3 trace_ray_iter(vec3 ray_d, vec3 ray_o, out vec3 ray_d_next, out vec3 ray_o_
     vec3 diffuse = direct_color * max(0, dot(L, hit.normal));
     vec3 reflect_color = vec3(0, 0, 0);
 
+    
+
     float diffuse_wight = weight * (1 - refectivity);
     if (refectivity > 0) {
         has_refract = true;
@@ -262,7 +264,7 @@ vec3 trace_ray_iter(vec3 ray_d, vec3 ray_o, out vec3 ray_d_next, out vec3 ray_o_
         ray_o_next = hit.position;
     }
 
-    return diffuse * diffuse_wight;
+    return diffuse;
 }
 
 

@@ -5,7 +5,7 @@
 
 #include "linalg.h"
 
-#define INITAL_BUFFER_SIZE 10
+#define INITIAL_BUFFER_SIZE 10
 
 /* Object storing sphere properties */
 typedef struct sphere_t {

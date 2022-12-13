@@ -8,6 +8,8 @@
 #include "linalg.h"
 #include "scene_buffer.h"
 
+#define TIME_CONST (50)
+
 GLfloat timeValue    = 0.0;
 float   elapsed_time = 0.0;
 
@@ -33,10 +35,10 @@ void update_time()
 void movCamera(float distX, float distY, float distZ)
 {
     camera_pos[0] +=
-        (float)sin(-camera_angle) * distZ + (float)sin(-camera_angle + M_PI / 2) * distX;
-    camera_pos[1] += distY;
+        (float)sin(-camera_angle) * distZ*elapsed_time*TIME_CONST + (float)sin(-camera_angle + M_PI / 2) * distX*elapsed_time*TIME_CONST;
+    camera_pos[1] += distY*elapsed_time*TIME_CONST;
     camera_pos[2] +=
-        (float)cos(-camera_angle) * distZ + (float)cos(-camera_angle + M_PI / 2) * distX;
+        (float)cos(-camera_angle) * distZ*elapsed_time*TIME_CONST + (float)cos(-camera_angle + M_PI / 2) * distX*elapsed_time*TIME_CONST;
 }
 
 // Sets up shaders and textures buffer
@@ -138,10 +140,10 @@ int main(int argc, char *argv[])
         create_vec3(-20.0f, 40.0f, 50.0f),  // Red wall 1
         create_vec3(-20.0f, 0.0f, 50.0f),   create_vec3(-20.0f, 0.0f, -50.0f),
         create_vec3(-20.0f, 40.0f, -50.0f),  // Red wall 2
-        create_vec3(20.0f, 0.0f, 50.0f),    create_vec3(20.0f, 40.0f, -50.0f),
-        create_vec3(20.0f, 40.0f, 50.0f),  // Green wall 1
-        create_vec3(20.0f, 0.0f, 50.0f),    create_vec3(20.0f, 0.0f, -50.0f),
-        create_vec3(20.0f, 40.0f, -50.0f)  // Green wall 2
+        create_vec3(20.0f, 40.0f, 50.0f),    create_vec3(20.0f, 40.0f, -50.0f),
+        create_vec3(20.0f, 0.0f, 50.0f),  // Green wall 1
+        create_vec3(20.0f, 40.0f, -50.0f),    create_vec3(20.0f, 0.0f, -50.0f),
+        create_vec3(20.0f, 0.0f, 50.0f)  // Green wall 2
     };
 
     scene_t *scene = new_scene();
@@ -243,16 +245,16 @@ int main(int argc, char *argv[])
             movCamera(-speed, 0.0, 0.0);
         }
         if (glfwGetKey(window, GLFW_KEY_T) == 1) {
-            camera_pos[1] += speed;
+            camera_pos[1] += speed*elapsed_time*TIME_CONST;
         }
         if (glfwGetKey(window, GLFW_KEY_G) == 1) {
-            camera_pos[1] -= speed;
+            camera_pos[1] -= speed*elapsed_time*TIME_CONST;
         }
         if (glfwGetKey(window, GLFW_KEY_Q) == 1) {
-            camera_angle -= 0.01;
+            camera_angle -= 0.01*elapsed_time*TIME_CONST;
         }
         if (glfwGetKey(window, GLFW_KEY_E) == 1) {
-            camera_angle += 0.01;
+            camera_angle += 0.01*elapsed_time*TIME_CONST;
         }
 
         glfwSwapBuffers(window);
