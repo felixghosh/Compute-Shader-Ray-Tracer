@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
      scene_add_triangle(scene,
                         create_triangle(&vertices[0], create_vec3(1.0f, 0.1f, 0.1f)));  // Floor 1
     scene_add_triangle(scene,
-                       create_triangle(&vertices[3], create_vec3(1.0f, 0.1f, 0.1f)));  // Floor 2
+                       create_triangle(&vertices[3], create_vec3(1.0f, 0.0f, 0.1f)));  // Floor 2
     //  scene_add_triangle(
     //       scene, create_triangle(&vertices[6], create_vec3(0.9f, 0.9f, 0.9f)));  // Back wall 1
     //   scene_add_triangle(
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
     printf("N triangles: %d\n", triangle_n);
 
     // Scene light
-    GLfloat light[] = {0.0, 30, -5};
+    GLfloat light[] = {0.0, 10, -5};
 
 
     while (!glfwWindowShouldClose(window)) {
