@@ -168,14 +168,15 @@ int main(int argc, char *argv[])
     scene_add_triangle(
         scene, create_triangle(&vertices[27], create_vec3(0.1f, 0.6f, 0.1f)));  // Green wall 2
 
-    scene_add_sphere(scene, create_sphere(3, create_vec3(-7, 3, -20.0), create_vec3(0, 1, 0)));
-    scene_add_sphere(scene, create_sphere(3, create_vec3(0, 3, -20.0), create_vec3(0, 0, 1)));
-    scene_add_sphere(scene, create_sphere(3, create_vec3(7, 3, -20.0), create_vec3(1, 0, 0)));
+    scene_add_sphere(scene,
+                     create_sphere(3, create_vec3(-7, 3, -20.0), create_vec3(0, 1, 0), 0, 0));
+    scene_add_sphere(scene, create_sphere(3, create_vec3(0, 3, -20.0), create_vec3(0, 0, 1), 0, 0));
+    scene_add_sphere(scene, create_sphere(3, create_vec3(7, 3, -20.0), create_vec3(1, 0, 0), 0, 0));
 
-    scene_add_sphere(
-        scene, create_sphere(3, create_vec3(9.0f, 10.0f, 0.0f), create_vec3(1.0f, 0.6f, 0.1f)));
-    scene_add_sphere(
-        scene, create_sphere(3, create_vec3(0.0f, 13.0f, 0.0f), create_vec3(0.1f, 0.1f, 1.0f)));
+    scene_add_sphere(scene, create_sphere(3, create_vec3(9.0f, 10.0f, 0.0f),
+                                          create_vec3(1.0f, 0.6f, 0.1f), 0.2, 0));
+    scene_add_sphere(scene, create_sphere(3, create_vec3(0.0f, 13.0f, 0.0f),
+                                          create_vec3(0.1f, 0.1f, 1.0f), 0.9, 0));
 
     // Create sphere ssbo:s
     int    sphere_size;
@@ -255,6 +256,12 @@ int main(int argc, char *argv[])
         }
         if (glfwGetKey(window, GLFW_KEY_E) == 1) {
             camera_angle += 0.01*elapsed_time*TIME_CONST;
+        }
+        if (glfwGetKey(window, GLFW_KEY_Y) == 1) {
+            light[2] -= 0.1;
+        }
+        if (glfwGetKey(window, GLFW_KEY_H) == 1) {
+            light[2] += 0.1;
         }
 
         glfwSwapBuffers(window);

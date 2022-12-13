@@ -9,9 +9,11 @@
 
 /* Object storing sphere properties */
 typedef struct sphere_t {
-    vec4 geometry; /*index (xyz) is its center, and index 3 is radius */
-    vec4 color; /* only xyz will be used, is kept vec4 to make alignment easier when sending it to
-                   the gpu*/
+    vec4  pos;    // xyz contains center and w radius
+    vec4  color;  // alpha is unused
+    float reflectivity;
+    float refractivity;
+    float __padding[2];  // Ensures vec4 alignment, simplifies the SSBO creation
 } sphere_t;
 
 /* Object storing triangle properties */
@@ -30,7 +32,8 @@ typedef struct scene_t scene_t;
 triangle_t create_triangle(vec3 points[3], vec3 color);
 
 /* Sphere functions */
-sphere_t create_sphere(float radius, vec3 center, vec3 color);
+sphere_t create_sphere(float radius, vec3 center, vec3 color, float reflectivity,
+                       float refractivity);
 
 /* Scene buffer functions */
 scene_t *new_scene();

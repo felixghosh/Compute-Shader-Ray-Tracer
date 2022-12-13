@@ -18,11 +18,14 @@ struct scene_t {
     triangle_t *triangle_buffer;
 };
 
-sphere_t create_sphere(float radius, vec3 center, vec3 color)
+sphere_t create_sphere(float radius, vec3 center, vec3 color, float reflectivity,
+                       float refractivity)
 {
     return (sphere_t){
-        (vec4){center.x, center.y, center.z, radius},
-        (vec4){color.x,  color.y,  color.z,  0.0   },
+        .pos          = (vec4){center.x, center.y, center.z, radius},
+        .color        = (vec4){color.x,  color.y,  color.z,  0.0   },
+        .reflectivity = reflectivity,
+        .refractivity = refractivity,
     };
 }
 

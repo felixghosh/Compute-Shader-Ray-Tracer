@@ -10,8 +10,10 @@ layout (rgba32f, binding = 0) uniform image2D imgOutput;
 
 // Sphere object
 struct sphere_t {
-    vec4 pos;
-    vec4 color;
+    vec4  pos; // xyz contains center and w radius
+    vec4  color; // alpha is unused
+    float reflectivity;
+    float refractivity;
 };
 
 // Triangle object
@@ -48,6 +50,8 @@ struct hit_data {
     vec3 color;
     vec3 position;
     vec3 normal;
+    float reflectivity;
+    float refractivity;
 };
 
 struct ray_node {
@@ -155,16 +159,24 @@ bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, float tmin, float 
     float nearest = INF;
     float t = 0;
 
+    // purley diffused material as default
+    hit.reflectivity = 0;
+    hit.refractivity = 0;
+
     // Interare over our scene, searching for our first hit
     for (int i = 0; i < n_spheres; i++) {
-        vec3 center = spheres[i].pos.xyz;
-        float radius = spheres[i].pos.w;
+        sphere_t sphere = spheres[i];
+        vec3 center = sphere.pos.xyz;
+        float radius = sphere.pos.w;
 
         // Colision testing
         if (sphere_intersect(ray_d, ray_o, center, radius, tmin, tmax, t) && t < nearest) { 
             hit.position = ray_o + t * ray_d;
             hit.normal = normalize(hit.position - center);
-            hit.color = spheres[i].color.xyz;
+            hit.color = sphere.color.xyz;
+            hit.reflectivity = sphere.reflectivity;
+            hit.refractivity = sphere.refractivity;
+
             nearest = t;
 
             if(any_hit) {
@@ -229,22 +241,12 @@ vec3 trace_ray_iter(vec3 ray_d, vec3 ray_o, out vec3 ray_d_next, out vec3 ray_o_
         return vec3(0,0,0); // evironment base color
     };
 
+    float reflectivity = hit.reflectivity;
     vec3 direct_color = hit.color;
     vec3 light_dir = light_position - hit.position;
     vec3 L = normalize(light_dir);
     vec3 shadow_ray_d = L;
     vec3 shadow_ray_o = hit.position;
-
-    // Refraction
-    float refectivity = 0; // TODO: Don't hardcode
-
-    if (direct_color == vec3(0.1, 0.1, 1.0)) {
-        refectivity = 0.9;
-    }  
-
-    if (direct_color == vec3(1.0, 0.6, 0.1)) {
-        refectivity = 0.2;
-    }  
 
     if(scene_intersection(shadow_ray_d, shadow_ray_o, true, 0.01, length(light_dir), shadow_hit)) {
         direct_color = vec3(0,0,0); 
@@ -254,17 +256,15 @@ vec3 trace_ray_iter(vec3 ray_d, vec3 ray_o, out vec3 ray_d_next, out vec3 ray_o_
     vec3 diffuse = direct_color * max(0, dot(L, hit.normal));
     vec3 reflect_color = vec3(0, 0, 0);
 
-    
-
-    float diffuse_wight = weight * (1 - refectivity);
-    if (refectivity > 0) {
+    float diffuse_wight = weight * (1 - reflectivity);
+    if (reflectivity > 0) {
         has_refract = true;
-        weight *= refectivity;
+        weight *= reflectivity;
         ray_d_next = reflect(ray_d, hit.normal);
         ray_o_next = hit.position;
     }
 
-    return diffuse;
+    return diffuse * diffuse_wight;
 }
 
 
