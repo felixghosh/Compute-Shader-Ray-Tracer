@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "gl_utils.h"
 #include "linalg.h"
@@ -12,6 +13,7 @@
 
 GLfloat timeValue    = 0.0;
 float   elapsed_time = 0.0;
+double total_time = 0.0;
 
 GLfloat camera_pos[] = {0.0, 2.0, 1.0};
 GLfloat camera_angle = 0.0;
@@ -197,6 +199,7 @@ int main(int argc, char *argv[])
 
     while (!glfwWindowShouldClose(window)) {
         update_time();
+        total_time += elapsed_time;
         printf("fps: %5u\n", (int)(1 / elapsed_time));
 
         // Passing uniforms
@@ -215,6 +218,11 @@ int main(int argc, char *argv[])
         // Copy texture
         glBlitFramebuffer(0, 0, TEXTURE_HEIGHT, TEXTURE_HEIGHT, 0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT,
                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+        //Update light pos
+        light[0] = sin(total_time)*10;
+        light[1] = 30 + cos(total_time)*5;
+        light[2] = -5 + sin(total_time)*5;
 
         glfwPollEvents();
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
