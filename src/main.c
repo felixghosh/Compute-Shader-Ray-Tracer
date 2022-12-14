@@ -11,6 +11,14 @@
 
 #define TIME_CONST (50)
 
+/*
+    Window configuration
+*/
+const unsigned int TEXTURE_WIDTH  = 800;
+const unsigned int TEXTURE_HEIGHT = 800;
+const bool         FULLSCREEN     = false;
+const bool         ANIMATE_LIGHT  = true;
+
 GLfloat timeValue    = 0.0;
 float   elapsed_time = 0.0;
 double  total_time   = 0.0;
@@ -24,13 +32,6 @@ float speed = 0.3;
 
 unsigned int shaderProgram;
 const char  *shaderSource = "shaders/def.comp";
-
-/*
-    Window configuration
-*/
-const unsigned int TEXTURE_WIDTH  = 800;
-const unsigned int TEXTURE_HEIGHT = 800;
-const bool         FULLSCREEN     = false;
 
 void update_time()
 {
@@ -155,6 +156,8 @@ int main(int argc, char *argv[])
     };
 
     scene_t *scene = new_scene();
+
+    // Cornel scene
     scene_add_triangle(scene,
                        create_triangle(&vertices[0], create_vec3(0.9f, 0.9f, 0.9f)));  // Floor 1
     scene_add_triangle(scene,
@@ -176,18 +179,26 @@ int main(int argc, char *argv[])
     scene_add_triangle(
         scene, create_triangle(&vertices[27], create_vec3(0.1f, 0.6f, 0.1f)));  // Green wall 2
 
+    // Diffused spheres
     scene_add_sphere(scene,
                      create_sphere(3, create_vec3(-7, 3, -20.0), create_vec3(0, 1, 0), 0, 0));
     scene_add_sphere(scene, create_sphere(3, create_vec3(0, 3, -20.0), create_vec3(0, 0, 1), 0, 0));
     scene_add_sphere(scene, create_sphere(3, create_vec3(7, 3, -20.0), create_vec3(1, 0, 0), 0, 0));
+    scene_add_sphere(scene, create_sphere(3, create_vec3(-9, 10, -17.0), create_vec3(1, 0, 0), 0, 0));
 
-    scene_add_sphere(scene, create_sphere(3, create_vec3(9.0f, 10.0f, 0.0f),
+    // Reflective spheres
+    scene_add_sphere(scene, create_sphere(3, create_vec3(7, 3, 0),
                                           create_vec3(1.0f, 0.6f, 0.1f), 0.2, 0));
-    scene_add_sphere(scene, create_sphere(3, create_vec3(0.0f, 13.0f, 0.0f),
+    scene_add_sphere(scene, create_sphere(3, create_vec3(9, 10, 0),
+                                          create_vec3(1.0f, 0.6f, 0.1f), 0.2, 0));
+    scene_add_sphere(scene, create_sphere(3, create_vec3(0, 13, 0.),
                                           create_vec3(0.1f, 0.1f, 1.0f), 0.9, 0));
 
+    // Transparent spheres
     scene_add_sphere(scene,
                      create_sphere(3, create_vec3(-7, 3, 0), create_vec3(1, 1, 1), 0.2, 0.8));
+    scene_add_sphere(scene,
+                     create_sphere(3, create_vec3(-9, 10, 0), create_vec3(1, 1, 1), 0.2, 0.8));
 
     // Create sphere ssbo:s
     int    sphere_size;
@@ -229,9 +240,11 @@ int main(int argc, char *argv[])
                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
         // Update light pos
-        light[0] = sin(total_time) * 10;
-        light[1] = 30 + cos(total_time) * 5;
-        light[2] = -5 + sin(total_time) * 5;
+        if(ANIMATE_LIGHT) {
+            light[0] = sin(total_time) * 10;
+            light[1] = 30 + cos(total_time) * 5;
+            light[2] = -5 + sin(total_time) * 5;
+        }
 
         glfwPollEvents();
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
