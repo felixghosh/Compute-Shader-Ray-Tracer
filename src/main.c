@@ -1,9 +1,9 @@
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <math.h>
 
 #include "gl_utils.h"
 #include "linalg.h"
@@ -13,7 +13,7 @@
 
 GLfloat timeValue    = 0.0;
 float   elapsed_time = 0.0;
-double total_time = 0.0;
+double  total_time   = 0.0;
 
 GLfloat camera_pos[] = {0.0, 2.0, 1.0};
 GLfloat camera_angle = 0.0;
@@ -25,7 +25,12 @@ float speed = 0.3;
 unsigned int shaderProgram;
 const char  *shaderSource = "shaders/def.comp";
 
-const unsigned int TEXTURE_WIDTH = 800, TEXTURE_HEIGHT = 800;
+/*
+    Window configuration
+*/
+const unsigned int TEXTURE_WIDTH  = 800;
+const unsigned int TEXTURE_HEIGHT = 800;
+const bool         FULLSCREEN     = false;
 
 void update_time()
 {
@@ -36,11 +41,11 @@ void update_time()
 
 void movCamera(float distX, float distY, float distZ)
 {
-    camera_pos[0] +=
-        (float)sin(-camera_angle) * distZ*elapsed_time*TIME_CONST + (float)sin(-camera_angle + M_PI / 2) * distX*elapsed_time*TIME_CONST;
-    camera_pos[1] += distY*elapsed_time*TIME_CONST;
-    camera_pos[2] +=
-        (float)cos(-camera_angle) * distZ*elapsed_time*TIME_CONST + (float)cos(-camera_angle + M_PI / 2) * distX*elapsed_time*TIME_CONST;
+    camera_pos[0] += (float)sin(-camera_angle) * distZ * elapsed_time * TIME_CONST +
+                     (float)sin(-camera_angle + M_PI / 2) * distX * elapsed_time * TIME_CONST;
+    camera_pos[1] += distY * elapsed_time * TIME_CONST;
+    camera_pos[2] += (float)cos(-camera_angle) * distZ * elapsed_time * TIME_CONST +
+                     (float)cos(-camera_angle + M_PI / 2) * distX * elapsed_time * TIME_CONST;
 }
 
 // Sets up shaders and textures buffer
@@ -96,7 +101,8 @@ int main(int argc, char *argv[])
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow *window =
-        glfwCreateWindow(TEXTURE_WIDTH, TEXTURE_HEIGHT, "EDAN35 Project - Ray tracer", glfwGetPrimaryMonitor(), NULL);
+        glfwCreateWindow(TEXTURE_WIDTH, TEXTURE_HEIGHT, "EDAN35 Project - Ray tracer",
+                         FULLSCREEN ? glfwGetPrimaryMonitor() : NULL, NULL);
     if (window == NULL) {
         printf("Failed to create GLFW window\n");
         glfwTerminate();
@@ -142,9 +148,9 @@ int main(int argc, char *argv[])
         create_vec3(-20.0f, 40.0f, 50.0f),  // Red wall 1
         create_vec3(-20.0f, 0.0f, 50.0f),   create_vec3(-20.0f, 0.0f, -50.0f),
         create_vec3(-20.0f, 40.0f, -50.0f),  // Red wall 2
-        create_vec3(20.0f, 40.0f, 50.0f),    create_vec3(20.0f, 40.0f, -50.0f),
+        create_vec3(20.0f, 40.0f, 50.0f),   create_vec3(20.0f, 40.0f, -50.0f),
         create_vec3(20.0f, 0.0f, 50.0f),  // Green wall 1
-        create_vec3(20.0f, 40.0f, -50.0f),    create_vec3(20.0f, 0.0f, -50.0f),
+        create_vec3(20.0f, 40.0f, -50.0f),  create_vec3(20.0f, 0.0f, -50.0f),
         create_vec3(20.0f, 0.0f, 50.0f)  // Green wall 2
     };
 
@@ -219,10 +225,10 @@ int main(int argc, char *argv[])
         glBlitFramebuffer(0, 0, TEXTURE_HEIGHT, TEXTURE_HEIGHT, 0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT,
                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-        //Update light pos
-        light[0] = sin(total_time)*10;
-        light[1] = 30 + cos(total_time)*5;
-        light[2] = -5 + sin(total_time)*5;
+        // Update light pos
+        light[0] = sin(total_time) * 10;
+        light[1] = 30 + cos(total_time) * 5;
+        light[2] = -5 + sin(total_time) * 5;
 
         glfwPollEvents();
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
@@ -254,22 +260,22 @@ int main(int argc, char *argv[])
             movCamera(-speed, 0.0, 0.0);
         }
         if (glfwGetKey(window, GLFW_KEY_T) == 1) {
-            camera_pos[1] += speed*elapsed_time*TIME_CONST;
+            camera_pos[1] += speed * elapsed_time * TIME_CONST;
         }
         if (glfwGetKey(window, GLFW_KEY_G) == 1) {
-            camera_pos[1] -= speed*elapsed_time*TIME_CONST;
+            camera_pos[1] -= speed * elapsed_time * TIME_CONST;
         }
         if (glfwGetKey(window, GLFW_KEY_Q) == 1) {
-            camera_angle -= 0.01*elapsed_time*TIME_CONST;
+            camera_angle -= 0.01 * elapsed_time * TIME_CONST;
         }
         if (glfwGetKey(window, GLFW_KEY_E) == 1) {
-            camera_angle += 0.01*elapsed_time*TIME_CONST;
+            camera_angle += 0.01 * elapsed_time * TIME_CONST;
         }
         if (glfwGetKey(window, GLFW_KEY_Y) == 1) {
-            light[2] -= 0.1*elapsed_time*TIME_CONST;
+            light[2] -= 0.1 * elapsed_time * TIME_CONST;
         }
         if (glfwGetKey(window, GLFW_KEY_H) == 1) {
-            light[2] += 0.1*elapsed_time*TIME_CONST;
+            light[2] += 0.1 * elapsed_time * TIME_CONST;
         }
 
         glfwSwapBuffers(window);
