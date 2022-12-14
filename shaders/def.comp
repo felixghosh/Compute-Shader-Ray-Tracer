@@ -193,6 +193,8 @@ bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, float tmin, float 
             hit.position = ray_o + t * ray_d;
             hit.normal = normal;
             hit.color = triangle.color.xyz;
+            hit.reflectivity = 0;
+            hit.refractivity = 0;
             nearest = t;
 
             if(any_hit) {
@@ -214,7 +216,7 @@ vec3 process_ray(ray_t incoming, out ray_t outgoing[2])
     outgoing[1].iter = DEPTH;
 
     if (!scene_intersection(incoming.dir, incoming.origin, false, (incoming.iter == 0) ? 0 : 0.01, INF, hit)) {
-        return vec3(0,0,0); // evironment base color
+        return vec3(0.0,0.0,0.05);// evironment base color
     };
 
     float reflectivity = hit.reflectivity;
