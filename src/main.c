@@ -186,7 +186,8 @@ int main(int argc, char *argv[])
     scene_add_sphere(scene, create_sphere(3, create_vec3(0.0f, 13.0f, 0.0f),
                                           create_vec3(0.1f, 0.1f, 1.0f), 0.9, 0));
 
-    scene_add_sphere(scene, create_sphere(3, create_vec3(-7, 3, 0), create_vec3(1, 1, 1), 0, 1));
+    scene_add_sphere(scene,
+                     create_sphere(3, create_vec3(-7, 3, 0), create_vec3(1, 1, 1), 0.2, 0.8));
 
     // Create sphere ssbo:s
     int    sphere_size;
