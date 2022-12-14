@@ -47,9 +47,10 @@ const float plane_width = 3.0;
 const float plane_height = 3.0;
 
 struct hit_data {
-    vec3 color;
-    vec3 position;
-    vec3 normal;
+    vec3  color;
+    vec3  position;
+    vec3  normal;
+    bool  front_facing;
     float reflectivity;
     float refractivity;
 };
@@ -59,6 +60,7 @@ struct ray_t {
     vec3 dir;
     float weight;
     int iter;
+    bool ref;
 };
 
 bool solve_quadratic(float A, float B, float C, out float t0, out float t1) {
@@ -88,7 +90,7 @@ bool sphere_intersect(vec3 ray_d, vec3 ray_o, vec3 sphere_c, float sphere_r, flo
     }
     if (t0 < tmin && t1 > tmax) return false; // ray inside sphere
 
-    t = t0 < tmin ? t1 : t0;
+    t = (t0 < tmin) ? t0 : t1;
     return true;
 }
 
@@ -172,9 +174,16 @@ bool scene_intersection(vec3 ray_d, vec3 ray_o, bool any_hit, float tmin, float 
         if (sphere_intersect(ray_d, ray_o, center, radius, tmin, tmax, t) && t < nearest) { 
             hit.position = ray_o + t * ray_d;
             hit.normal = normalize(hit.position - center);
+            hit.front_facing = dot(-ray_d, hit.normal) > 0;
+
+            if (!hit.front_facing) {
+                hit.normal = -hit.normal;
+            }
+
             hit.color = sphere.color.xyz;
             hit.reflectivity = sphere.reflectivity;
             hit.refractivity = sphere.refractivity;
+            
 
             nearest = t;
 
@@ -215,11 +224,20 @@ vec3 process_ray(ray_t incoming, out ray_t outgoing[2])
     outgoing[0].iter = DEPTH;
     outgoing[1].iter = DEPTH;
 
-    if (!scene_intersection(incoming.dir, incoming.origin, false, (incoming.iter == 0) ? 0 : 0.01, INF, hit)) {
+    // Terminate iteration as default
+    outgoing[0].ref = false;
+    outgoing[1].ref = false;
+
+    // if(incoming.ref) {
+    //     return vec3(1,0,0);
+    // }
+
+    if (!scene_intersection(incoming.dir, incoming.origin, false, (incoming.iter == 0) ? 0 : 0.01, FLT_MAX, hit)) {
         return vec3(0.0,0.0,0.05);// evironment base color
     };
 
     float reflectivity = hit.reflectivity;
+    float refractivity = hit.refractivity;
     vec3 direct_color = hit.color;
     vec3 light_dir = light_position - hit.position;
     vec3 L = normalize(light_dir);
@@ -234,12 +252,20 @@ vec3 process_ray(ray_t incoming, out ray_t outgoing[2])
     vec3 diffuse = direct_color * max(0, dot(L, hit.normal));
     vec3 reflect_color = vec3(0, 0, 0);
 
-    float diffuse_weight = incoming.weight * (1 - reflectivity);
+    float diffuse_weight = incoming.weight * (1 - reflectivity - refractivity);
     if (reflectivity > 0) {
         outgoing[0].weight = incoming.weight * reflectivity;
         outgoing[0].iter = incoming.iter + 1;
         outgoing[0].dir = reflect(incoming.dir, hit.normal);
         outgoing[0].origin = hit.position;
+    }
+
+    if (refractivity > 0) {
+        outgoing[1].weight = incoming.weight * refractivity;
+        outgoing[1].iter = incoming.iter + 1;
+        outgoing[1].dir = refract(normalize(incoming.dir), hit.normal, hit.front_facing? 1/1.5: 1.5);
+        outgoing[1].origin = hit.position;
+        outgoing[1].ref = true;
     }
 
     return diffuse * diffuse_weight;
@@ -271,8 +297,11 @@ vec3 trace_ray_recur(vec3 ray_d, vec3 ray_o)
         for (int j = 0; j < 2; j++) {
             // Append child we havn't reached termination
             if (children[j].iter < DEPTH) {
-                queue[size] = children[j];
-                size++;
+                queue[size++] = children[j];
+
+                if (j == 1) {
+                    //color = children[j].dir;
+                }
             }
         }
     }
